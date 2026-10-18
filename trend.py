@@ -61,22 +61,25 @@ def _funding(symbol,start):
     f=pd.concat(parts);f.index=pd.to_datetime(f.calc_time,unit='ms')
     return f.last_funding_rate.astype(float).resample('1D').sum()
 
-def target_positions(P,target_vol=0.20,cap=1.0):
+def target_positions(P,target_vol=0.20,cap=1.0,members=None):
     """P: DataFrame of daily closes (columns = coins). Returns DataFrame of target positions as a fraction of equity
-    (+ long / - short), row t = position to hold during day t+1, decided with closes up to and including day t."""
+    (+ long / - short), row t = position to hold during day t+1, decided with closes up to and including day t.
+    members: optional bool DataFrame like P - a coin is held only on days it is True (signals use its full history)."""
     R=np.log(P).diff();W=(0.5/(R.rolling(20).std()*np.sqrt(ANN))).clip(upper=2)
     S=(sum(np.sign(P-P.rolling(n).mean()) for n in SMAS)/len(SMAS))*W
     sc=1/(S.shift(1)*R).rolling(60,min_periods=30).std()                       # equal-risk sleeves
-    pre=S*sc;pre=pre.div(pre.notna().sum(1),axis=0)                            # 1/n of risk per coin with a signal
+    pre=S*sc
+    if members is not None:pre=pre.where(members.reindex_like(pre).fillna(False).astype(bool))
+    pre=pre.div(pre.notna().sum(1),axis=0)                            # 1/n of risk per coin with a signal
     pr=(pre.shift(1)*R).sum(1,min_count=1)
     ps=(target_vol/np.sqrt(ANN))/pr.rolling(60,min_periods=30).std()             # portfolio vol target
     N=pre.mul(ps,axis=0);g=N.abs().sum(1)
     return N.div((g/cap).clip(lower=1),axis=0)                                     # gross leverage cap
 
-def backtest(P,F=None,target_vol=0.20,cap=1.0,cost_bp=10.0):
+def backtest(P,F=None,target_vol=0.20,cap=1.0,cost_bp=10.0,members=None):
     """Daily log returns of the strategy: yesterday's targets x today's log returns, minus funding paid on perps and
     cost_bp per unit of position change."""
-    N=target_positions(P,target_vol,cap).shift(1);R=np.log(P).diff()
+    N=target_positions(P,target_vol,cap,members).shift(1);R=np.log(P).diff()
     F=(F if F is not None else pd.DataFrame(0.,index=P.index,columns=P.columns)).reindex(P.index).fillna(0)
     N0=N.fillna(0)                                                             # coin not yet listed / no signal -> flat
     ret=(N0*R).sum(1)-(N0*F).sum(1)-N0.diff().abs().sum(1)*cost_bp*1e-4
