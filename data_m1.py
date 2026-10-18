@@ -1,12 +1,12 @@
 """Minute (1m) klines from Binance public archives (data.binance.vision) -> local parquet cache.
 
-usage: python data_m1.py [BTCUSDT ETHUSDT ...] [--market spot|um]
+usage: python data_m1.py [BTCUSDT ETHUSDT ...] [--universe] [--market spot|um] [--jobs 6] [--drop-raw]
 
 Monthly zips for completed months, daily zips for the current month. Raw zips are cached in data/raw/, the merged
 series in data/m1/{market}_{symbol}.parquet. Re-running only downloads what is missing.
 Archive timestamps switched from ms to us in 2025 (spot) - both are handled.
 """
-import io,os,sys,zipfile,argparse,urllib.error,datetime as dt
+import io,os,sys,shutil,zipfile,argparse,urllib.error,datetime as dt
 import numpy as np,pandas as pd
 import trend
 
@@ -60,6 +60,13 @@ def daily_closes(symbol,market='spot'):
 
 if __name__=='__main__':
     a=argparse.ArgumentParser();a.add_argument('symbols',nargs='*',default=list(trend.COINS));a.add_argument('--market',default='spot')
-    a=a.parse_args()
-    for s in a.symbols:
-        d=download(s,a.market);print(f'{s}: {len(d):,} minutes {d.index[0]} .. {d.index[-1]}')
+    a.add_argument('--universe',action='store_true',help='all symbols from data/universe.csv (python universe.py)')
+    a.add_argument('--jobs',type=int,default=1);a.add_argument('--drop-raw',action='store_true',help='delete cached zips after merging')
+    a=a.parse_args();syms=list(pd.read_csv(f'{ROOT}/universe.csv').symbol) if a.universe else a.symbols
+    def one(s):
+        d=download(s,a.market)
+        if a.drop_raw:shutil.rmtree(f'{ROOT}/raw/{a.market}/{s}',ignore_errors=True)
+        return f'{s}: {len(d):,} minutes {d.index[0]} .. {d.index[-1]}'
+    from concurrent.futures import ThreadPoolExecutor
+    with ThreadPoolExecutor(a.jobs) as ex:
+        for r in ex.map(one,syms):print(r,flush=True)

@@ -6,7 +6,8 @@ what was tested.
 Rule (fixed, no fitting):
   per coin   signal = mean(sign(close - SMA_n)) for n in (20, 50, 100)          -> -1, -1/3, +1/3, +1
              sleeve = signal * min(2, 0.50 / vol20)                              (vol20 = 20-day realized vol, annualized)
-  portfolio  each sleeve scaled to equal risk (trailing 60-day vol of its own returns), halves summed,
+  portfolio  each sleeve scaled to equal risk (trailing 60-day vol of its own returns), 1/n each (n = coins with a
+             signal that day; coins enter after ~130 days of history), summed,
              then scaled to TARGET_VOL using the trailing 60-day vol of the combined book,
              gross exposure (|BTC| + |ETH|) capped at CAP x equity.
   timing     computed from completed daily closes (00:00 UTC), held for the next day.
@@ -38,8 +39,17 @@ def daily_closes(symbol,start='2017-08-01'):
     today=pd.Timestamp.now(tz='UTC').floor('D').tz_localize(None)
     return s[~s.index.duplicated()][s.index<today]
 
-def daily_funding(symbol,start='2019-09'):
-    """USD-M perpetual funding (sum per UTC day) from data.binance.vision monthly files; missing months -> 0."""
+def daily_funding(symbol,start='2019-09',cache='data/funding'):
+    """USD-M perpetual funding (sum per UTC day) from data.binance.vision monthly files; missing months -> 0.
+    Completed months are cached in {cache}/{symbol}.csv."""
+    import os;path=f'{cache}/{symbol}.csv';last=pd.Period(dt.date.today(),'M')-1
+    if os.path.exists(path):
+        old=pd.read_csv(path,index_col=0,parse_dates=True).iloc[:,0]
+        if len(old)==0 or pd.Period(old.index[-1],'M')>=last:return old
+    s=_funding(symbol,start)
+    os.makedirs(cache,exist_ok=True);s.rename('funding').to_csv(path);return s
+
+def _funding(symbol,start):
     parts=[];m=pd.Period(start,'M');last=pd.Period(dt.date.today(),'M')-1
     while m<=last:
         try:
@@ -57,7 +67,7 @@ def target_positions(P,target_vol=0.20,cap=1.0):
     R=np.log(P).diff();W=(0.5/(R.rolling(20).std()*np.sqrt(ANN))).clip(upper=2)
     S=(sum(np.sign(P-P.rolling(n).mean()) for n in SMAS)/len(SMAS))*W
     sc=1/(S.shift(1)*R).rolling(60,min_periods=30).std()                       # equal-risk sleeves
-    pre=S*sc/len(P.columns)
+    pre=S*sc;pre=pre.div(pre.notna().sum(1),axis=0)                            # 1/n of risk per coin with a signal
     pr=(pre.shift(1)*R).sum(1,min_count=1)
     ps=(target_vol/np.sqrt(ANN))/pr.rolling(60,min_periods=30).std()             # portfolio vol target
     N=pre.mul(ps,axis=0);g=N.abs().sum(1)
@@ -68,5 +78,6 @@ def backtest(P,F=None,target_vol=0.20,cap=1.0,cost_bp=10.0):
     cost_bp per unit of position change."""
     N=target_positions(P,target_vol,cap).shift(1);R=np.log(P).diff()
     F=(F if F is not None else pd.DataFrame(0.,index=P.index,columns=P.columns)).reindex(P.index).fillna(0)
-    ret=(N*R).sum(1,min_count=1)-(N*F).sum(1)-N.diff().abs().sum(1)*cost_bp*1e-4
-    return ret.dropna(),N
+    N0=N.fillna(0)                                                             # coin not yet listed / no signal -> flat
+    ret=(N0*R).sum(1)-(N0*F).sum(1)-N0.diff().abs().sum(1)*cost_bp*1e-4
+    return ret[N.notna().any(axis=1)],N
