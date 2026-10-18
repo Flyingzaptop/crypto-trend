@@ -34,7 +34,7 @@ def one(sym):
 
 if __name__=='__main__':
     a=argparse.ArgumentParser();a.add_argument('--jobs',type=int,default=16);a=a.parse_args();os.makedirs(OUT,exist_ok=True)
-    syms=[p.split('/')[-2] for p in ls('data/spot/monthly/klines/')];syms=[s for s in syms if s.endswith('USDT')]
+    syms=[p.split('/')[-2] for p in ls('data/spot/monthly/klines/')];syms=[s for s in syms if s.endswith('USDT') and s.isascii()]
     perps=[p.split('/')[-2] for p in ls('data/futures/um/monthly/klines/')]
     open(f'{OUT}/_perps.txt','w').write('\n'.join(perps));print(len(syms),'spot USDT pairs,',len(perps),'perps',flush=True)
     from concurrent.futures import ThreadPoolExecutor
