@@ -33,9 +33,16 @@ def compare(P,F,pool,x,min_months=12):
             'mean_delta_pct_yr':round(d.mean()*12*100,2) if len(m) else np.nan,
             'sharpe_pool':round(sh(rb),2),'sharpe_with':round(sh(rc),2),'enough':len(m)>=min_months}
 
-def greedy(P,F,order):
+def wait_load(P,F,x,end=None):
+    """Add coin x to P/F, waiting for data_m1.py to finish it if it is still downloading."""
+    import time
+    while not os.path.exists(f'{data_m1.ROOT}/m1/spot_{x}.parquet'):time.sleep(20)
+    p,f=load([x]);P[x]=p[x] if end is None else p[x][p.index<=end];F[x]=f[x];return P,F
+
+def greedy(P,F,order,end=None):
     pool=[order[0]];log=[]
     for x in order[1:]:
+        if x not in P:P,F=wait_load(P,F,x,end)
         c=compare(P,F,pool,x)
         if c is None:continue
         c['keep']=bool(c['enough'] and c['hit_pct']>50 and c['mean_delta_pct_yr']>0)
@@ -48,9 +55,9 @@ def greedy(P,F,order):
 if __name__=='__main__':
     a=argparse.ArgumentParser();a.add_argument('--end',default=None,help='selection uses data up to this date only')
     a.add_argument('--out',default='docs/results');a=a.parse_args();os.makedirs(a.out,exist_ok=True)
-    order=list(pd.read_csv('data/universe.csv').symbol);P,F=load(order);order=[s for s in order if s in P]
+    order=list(pd.read_csv('data/universe.csv').symbol);P,F=load(order[:1])
     Ps=P[P.index<=a.end] if a.end else P
-    pool,log=greedy(Ps,F,order);tag=f'_to{a.end}' if a.end else '_full'
+    pool,log=greedy(Ps,F,order,a.end);P,F=load(order);tag=f'_to{a.end}' if a.end else '_full'
     log.to_csv(f'{a.out}/greedy{tag}.csv',index=False)
     res={'selection_end':a.end,'pool':pool}
     for name,cols in (('BTC',['BTCUSDT']),('BTC+ETH',['BTCUSDT','ETHUSDT']),('pool',pool)):
