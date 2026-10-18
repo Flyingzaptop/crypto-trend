@@ -1,12 +1,15 @@
-"""Backtest from public Binance data. usage: python backtest.py [--vol 0.20] [--cap 1] [--cost 10] [--start 2017-12-15] [--out results]
+"""Backtest from public Binance data. usage: python backtest.py [--source rest|m1] [--vol 0.20] [--cap 1] [--cost 10] [--start 2017-12-15] [--out results]
 Prints yearly results and saves results/equity.png, results/daily.csv, results/summary.json."""
 import argparse,os,json,numpy as np,pandas as pd
 import trend
 
 a=argparse.ArgumentParser();a.add_argument('--vol',type=float,default=0.20);a.add_argument('--cap',type=float,default=1.0)
 a.add_argument('--cost',type=float,default=10.0);a.add_argument('--start',default='2017-12-15');a.add_argument('--out',default='results')
+a.add_argument('--source',default='rest',choices=['rest','m1'],help='daily closes from REST 1d klines or from the local 1m cache (python data_m1.py)')
 a=a.parse_args();os.makedirs(a.out,exist_ok=True)
-P=pd.DataFrame({s:trend.daily_closes(s) for s in trend.COINS}).dropna()
+if a.source=='m1':import data_m1;close=data_m1.daily_closes
+else:close=trend.daily_closes
+P=pd.DataFrame({s:close(s) for s in trend.COINS}).dropna()
 F=pd.DataFrame({s:trend.daily_funding(s) for s in trend.COINS})
 ret,N=trend.backtest(P,F,a.vol,a.cap,a.cost);ret=ret[ret.index>=a.start];N=N.reindex(ret.index)
 bh=np.log(P).diff().mean(1).reindex(ret.index)
