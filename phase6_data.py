@@ -16,15 +16,19 @@ def get(u,tries=5):
 def events(tag):
     path=f'{ROOT}/events_{tag}.json'
     if os.path.exists(path):return json.load(open(path))
-    out={};d=pd.Timestamp('2024-01-01')
-    while d<pd.Timestamp('2026-10-20'):
-        e=d+pd.Timedelta(days=3)
+    def win(d):
+        e=d+pd.Timedelta(days=3);res=[]
         for off in range(0,2000,100):
             x=get(f'https://gamma-api.polymarket.com/events?tag_slug={tag}&closed=true&limit=100&offset={off}'
                   f'&end_date_min={d:%Y-%m-%dT%H:%M:%SZ}&end_date_max={e:%Y-%m-%dT%H:%M:%SZ}')
-            for ev in x:out[ev['id']]=ev
+            res+=x
             if len(x)<100:break
-        d=e
+        return res
+    out={}
+    with ThreadPoolExecutor(8) as ex:
+        for x in ex.map(win,pd.date_range('2024-01-01','2026-10-20',freq='3D')):
+            for ev in x:out[ev['id']]=ev
+    print(tag,len(out),'events',flush=True)
     os.makedirs(ROOT,exist_ok=True);json.dump(list(out.values()),open(path,'w'));return list(out.values())
 
 def markets():
