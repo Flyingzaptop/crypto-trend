@@ -95,6 +95,11 @@ def legs(S0,s,T,kind,k,w):
     if kind=='straddle':return [(S0,False,1),(S0,True,1)]
     return [(S0*np.exp(-k*u),False,1),(S0*np.exp(k*u),True,1),(S0*np.exp(-(k+w)*u),False,-1),(S0*np.exp((k+w)*u),True,-1)]
 
+SIGMA=lambda S,K,s,T:s                     # pricing vol per leg (phase 0 replaces with a smile)
+SPREAD=lambda S,K,s,T,price:0.05*price     # half-spread paid per leg per trade (phase 0 replaces with measured)
+def px(S,K,s,T,call):return bs(S,K,SIGMA(S,K,s,T),T,call)
+def cost(S,K,s,T,price):return np.minimum(0.0003*S,0.125*price)+SPREAD(S,K,s,T,price)
+
 def fee(S,price,expiry=False):
     f=np.minimum((0.00015 if expiry else 0.0003)*S,0.125*price)
     return f if expiry else f+0.05*price
@@ -108,16 +113,16 @@ def run_coin(x,h,kind,k,w,allow,risk=0.05):
     pnl=np.zeros(len(idx));pos=None;trades=[]
     for i in range(len(idx)):
         if pos:
-            T=max(pos['exp']-i,0)/365;val=sum(sg*bs(S[i],K,V[i],T,c) for K,c,sg in pos['legs'])
+            T=max(pos['exp']-i,0)/365;val=sum(sg*px(S[i],K,V[i],T,c) for K,c,sg in pos['legs'])
             pnl[i]+=(pos['val']-val)*pos['n'];pos['val']=val
             done=pos['exp']==i;early=EXITS and (not done) and (pos['credit']-val>=0.5*pos['credit'] or val-pos['credit']>=2*pos['credit'])
             if done:
                 pnl[i]-=pos['n']*sum(fee(S[i],max(S[i]-K,0) if c else max(K-S[i],0),True) for K,c,sg in pos['legs'])
             elif early:
-                pnl[i]-=pos['n']*sum(fee(S[i],bs(S[i],K,V[i],T,c)) for K,c,sg in pos['legs'])
+                pnl[i]-=pos['n']*sum(cost(S[i],K,V[i],T,px(S[i],K,V[i],T,c)) for K,c,sg in pos['legs'])
             if done or early:trades.append((idx[pos['i0']],idx[i],pos['credit_frac'],early));pos=None
         if pos is None and entry[i] and al[i] and i+h<len(idx):
-            T=h/365;L=legs(S[i],V[i],T,kind,k,w);pr=[bs(S[i],K,V[i],T,c) for K,c,sg in L]
+            T=h/365;L=legs(S[i],V[i],T,kind,k,w);pr=[px(S[i],K,V[i],T,c) for K,c,sg in L]
             credit=sum(sg*q for (K,c,sg),q in zip(L,pr))
             if kind=='straddle':
                 Sx=S[i]*np.exp(3*V[i]*np.sqrt(T));maxloss=(Sx-S[i])-credit
@@ -125,17 +130,16 @@ def run_coin(x,h,kind,k,w,allow,risk=0.05):
                 maxloss=max(L[0][0]-L[2][0],L[3][0]-L[1][0])-credit
             if credit<=0 or maxloss<=0:continue
             n=risk/maxloss                                                     # per unit of equity
-            pnl[i]-=n*sum(fee(S[i],q) for q in pr)
+            pnl[i]-=n*sum(cost(S[i],K,V[i],T,q) for (K,c,sg),q in zip(L,pr))
             pos={'legs':L,'val':credit,'credit':credit,'n':n,'exp':i+h,'i0':i,'credit_frac':credit/S[i]}
     return pd.Series(pnl,index=idx),trades
 
 def run(p,h,kind,k,w,filt):
     parts=[]
     for cur,x in p.groupby('coin'):
-        allow={'always':pd.Series(True,index=x.index),
-               'har':x.dvol>x[f'har{30 if h==28 else 7}'],
-               'model':x[f'm{30 if h==28 else 7}']<0,
-               'model+tail':(x[f'm{30 if h==28 else 7}']<0)&(x.ptail<0.25)}[filt]
+        hh=30 if h==28 else 7
+        allow={'always':lambda:pd.Series(True,index=x.index),'har':lambda:x.dvol>x[f'har{hh}'],
+               'model':lambda:x[f'm{hh}']<0,'model+tail':lambda:(x[f'm{hh}']<0)&(x.ptail<0.25)}[filt]()
         r,_=run_coin(x,h,kind,k,w,allow.fillna(False));parts.append(r)
     r=pd.concat(parts,axis=1).fillna(0).sum(1)                               # P&L fractions of a shared equity
     return np.log1p(r.clip(lower=-0.99))
