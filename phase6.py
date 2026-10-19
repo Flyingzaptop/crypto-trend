@@ -16,7 +16,7 @@ def kind(q):
 def strike(q):
     m=re.search(r'\$\s?([\d,]+(?:\.\d+)?)\s?([kK])?',q)
     if not m:return np.nan
-    v=float(m.group(1).replace(','',''));return v*1000 if m.group(2) else v
+    v=float(m.group(1).replace(',',''));return v*1000 if m.group(2) else v
 
 def asset(r):
     t=(r.question+' '+r.event).lower()
@@ -28,7 +28,7 @@ def snap_price(h,ts,maxage):
     return p[i] if i>=0 and ts.timestamp()-t[i]<=maxage.total_seconds() else np.nan
 
 def build():
-    M=d6.markets();M['kind']=M.question.map(kind);M['K']=M.question.map(strike);M['asset']=M.apply(asset,axis=1)
+    M=pd.read_parquet(f'{d6.ROOT}/sample.parquet');M['kind']=M.question.map(kind);M['K']=M.question.map(strike);M['asset']=M.apply(asset,axis=1)
     M['end']=pd.to_datetime(M.end,utc=True);M['start']=pd.to_datetime(M.start,utc=True,errors='coerce')
     m1={a:data_m1.load(f'{a}USDT')[['close','high','low']] for a in ('BTC','ETH')}
     for a in m1:m1[a].index=m1[a].index.tz_localize('UTC').floor('min');m1[a]=m1[a][~m1[a].index.duplicated()]
@@ -50,7 +50,7 @@ def build():
                     s=sv*np.sqrt(tau)
                     if r.kind=='above' and np.isfinite(r.K):q=norm.cdf((np.log(S/r.K)-s*s/2)/s)
                     elif r.kind=='updown':
-                        win=pd.Timedelta('1h') if re.search(r'[AP]M ET',r.event) else pd.Timedelta('1D');st=r.end-win
+                        win=pd.Timedelta('15min') if re.search(r'\d:\d\d\s?[AP]M\s?-\s?\d',r.event) else pd.Timedelta('1h') if re.search(r'[AP]M ET',r.event) else pd.Timedelta('1D');st=r.end-win
                         if ts<st:q=norm.cdf(-s/2)
                         else:
                             o=c.close.asof(st-pd.Timedelta('1min'));q=norm.cdf((np.log(S/o)-s*s/2)/s)

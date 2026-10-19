@@ -55,9 +55,14 @@ def history(tok,end):
 
 if __name__=='__main__':
     M=markets();print(len(M),'resolved binary markets',M.tag.value_counts().to_dict(),flush=True)
-    hourly=M.question.str.contains('Up or Down',case=False)&M.event.str.contains(r'[AP]M ET',regex=True)
-    random.seed(0);keep=~hourly|pd.Series([random.random()<0.125 for _ in range(len(M))],index=M.index)
-    S=M[keep];print(len(S),'markets to fetch (hourly up/down sampled 1/8)',flush=True)
+    import phase6 as p6
+    M['kind']=M.question.map(p6.kind);crypto=M.tag.isin(['bitcoin','ethereum'])
+    quota={'above':8000,'updown':8000,'touch':4000,'other':1500}
+    parts=[M[~crypto]]
+    for k,n in quota.items():
+        g=M[crypto&(M.kind==k)].drop_duplicates('market_id');parts.append(g.sample(min(n,len(g)),random_state=0))
+    S=pd.concat(parts).drop_duplicates('market_id');S.to_parquet(f'{ROOT}/sample.parquet')
+    print(len(S),'markets to fetch (stratified sample of crypto + all others)',flush=True)
     def one(r):
         try:history(r.yes_token,r.end);return 1
         except Exception:return 0
