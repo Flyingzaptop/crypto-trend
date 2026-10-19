@@ -37,17 +37,17 @@ def run(cur,E,har,fund,hedge_bp):
         payoff=abs(S[-1]-r.K);fee_out=min(0.00015*S[-1],0.125*payoff) if payoff>0 else 0
         # option P&L per 1 unit for a seller; buyer is the negative minus the same costs
         opt_sell=prem-payoff;cost_opt=half+fee_in+fee_out
-        hedge=0.0;h_cost=0.0;pos=0.0
+        hedge=0.0;h_cost=0.0;pos=0.0;fsum=0.0
         for i in range(len(days)-1):
             T=(r.expiry-days[i]).total_seconds()/(365*86400)
             dlt=bs_delta(S[i],r.K,r.iv,T)                                       # straddle delta (long)
             tgt=dlt                                                               # seller is short delta -> hedge long dlt
             h_cost+=abs(tgt-pos)*S[i]*hedge_bp*1e-4;pos=tgt
-            hedge+=pos*(S[i+1]-S[i])-pos*S[i]*fund.get(days[i].normalize(),0.0)     # long perp pays funding
+            f_=pos*S[i]*fund.get(days[i].normalize(),0.0);fsum+=f_;hedge+=pos*(S[i+1]-S[i])-f_     # long perp pays funding
         h_cost+=abs(pos)*S[-1]*hedge_bp*1e-4
         for variant,sg in (('always_sell',1),('har_sign',sign)):
             pnl=sg*(opt_sell+hedge)-cost_opt-h_cost                               # hedge flips with the option side
-            out.append({'coin':cur,'entry':r.entry,'variant':variant,'side':sg,'iv':r.iv,'har':fc,'pnl_pct':pnl/r.index*100})
+            out.append({'coin':cur,'entry':r.entry,'variant':variant,'side':sg,'iv':r.iv,'har':fc,'pnl_pct':pnl/r.index*100,'funding_paid_pct':sg*fsum/r.index*100,'hedge_cost_pct':h_cost/r.index*100,'option_cost_pct':cost_opt/r.index*100})
     return pd.DataFrame(out)
 
 def stats(w):
