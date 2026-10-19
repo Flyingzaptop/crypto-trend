@@ -3,9 +3,9 @@ usage: python tradfi2.py"""
 import os,json,urllib.request,numpy as np,pandas as pd
 import trend,strategies as st,tradfi as tf
 
-def book_long(P,R,ann,smas=(50,100,200),vw=60,rw=60,cap=3.0,band=0.25):
+def book_long(P,R,ann,smas=(50,100,200),vw=60,rw=60,cap=3.0,band=0.25,vol=None):
     """Weekly (Friday) re-sizing with a no-trade band; same sizing idea as trend.target_positions."""
-    S=sum(np.sign(P-P.rolling(n).mean()) for n in smas)/len(smas);N=st.book(S,R,ann,vw,rw,cap=cap)
+    S=sum(np.sign(P-P.rolling(n).mean()) for n in smas)/len(smas);N=st.book(S,R,ann,vw,rw,cap=cap,vol=vol)
     fri=N.index.dayofweek==4;W=N.where(pd.Series(fri,index=N.index),np.nan).ffill()
     out=W.copy();held=pd.Series(0.,index=N.columns)
     for i,t in enumerate(W.index):
