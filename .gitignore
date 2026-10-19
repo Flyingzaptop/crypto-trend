@@ -4,3 +4,4 @@ __pycache__/
 !docs/*.csv
 data/
 !docs/results/*.csv
+!docs/vol/results/*.csv
