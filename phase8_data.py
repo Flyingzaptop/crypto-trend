@@ -19,13 +19,24 @@ def klines(sym):
     d=pd.concat(parts);d.index=data_m1._ts(d[0]);d=d[[4,7]].astype(float);d.columns=['close','quote_volume']
     d=d[~d.index.duplicated()].sort_index();d.to_parquet(path);return d
 
+def funding(sym):
+    path=f'data/funding/{sym}.csv'
+    if os.path.exists(path):return
+    parts=[]
+    for k in sorted(ad.ls(f'data/futures/um/monthly/fundingRate/{sym}/',keys=True)):
+        if not k.endswith('.zip'):continue
+        z=zipfile.ZipFile(io.BytesIO(trend._get(f'https://data.binance.vision/{k}')));f=pd.read_csv(z.open(z.namelist()[0]))
+        f.index=pd.to_datetime(f.calc_time,unit='ms');parts.append(f.last_funding_rate.astype(float))
+    s=pd.concat(parts).resample('1D').sum() if parts else pd.Series(dtype=float)
+    os.makedirs('data/funding',exist_ok=True);s.rename('funding').to_csv(path)
+
 if __name__=='__main__':
     os.makedirs(OUT,exist_ok=True)
     syms=[s for s in open(f'{ad.OUT}/_perps.txt').read().split() if s.endswith('USDT') and s.isascii()]
     def one(s):
         try:
             k=klines(s)
-            if k is not None and k.index[0]>=pd.Timestamp('2020-12-01'):trend.daily_funding(s)
+            if k is not None and len(k) and k.index[0]>=pd.Timestamp('2020-12-01'):funding(s)
             return 1
         except Exception as e:print('fail',s,repr(e)[:80]);return 0
     with ThreadPoolExecutor(12) as ex:print('ok',sum(ex.map(one,syms)),'of',len(syms))

@@ -11,9 +11,10 @@ def load():
         s=os.path.basename(f)[:-8];b=s[:-4]
         if EXCL.match(b) or s.endswith(('UPUSDT','DOWNUSDT')):continue
         d=pd.read_parquet(f)
-        if d.index[0]<pd.Timestamp('2021-01-01') or d.index[0]>pd.Timestamp('2026-08-31'):continue
+        if d.empty or d.index[0]<pd.Timestamp('2021-01-01') or d.index[0]>pd.Timestamp('2026-08-31'):continue
         base=re.sub(r'^(1000000|100000|10000|1000|1M)','',b)
-        P[s]=d.close;F[s]=trend.daily_funding(s)
+        P[s]=d.close;fp=f'data/funding/{s}.csv'
+        F[s]=pd.read_csv(fp,index_col=0,parse_dates=True).iloc[:,0] if os.path.exists(fp) else pd.Series(dtype=float)
     P=pd.DataFrame(P).sort_index();F=pd.DataFrame(F).reindex(P.index).fillna(0)
     # drop multiplier duplicates of an asset that already traded as a perp (e.g. 1000XYZ after XYZ)
     first=P.apply(lambda s:s.first_valid_index());keep=[]
@@ -24,15 +25,15 @@ def load():
     return P[keep],F[keep],first[keep]
 
 def backtest(P,F,first,k,H,hedge,btc,btc_f,cost=5e-4,cap=0.2):
-    R=np.log(P).diff();on=pd.DataFrame(False,index=P.index,columns=P.columns)
+    R=P.pct_change(fill_method=None);on=pd.DataFrame(False,index=P.index,columns=P.columns)
     for s,d in first.items():
         a=d+pd.Timedelta(days=k);on.loc[a:a+pd.Timedelta(days=H-1),s]=True
     on&=P.notna()
     n=on.sum(1);w=on.div(n.where(n>0),axis=0).clip(upper=cap).fillna(0)          # short weights, gross <= 1
-    W=w.shift(1).fillna(0);pnl=-(W*R.fillna(0)).sum(1)+(W*F).sum(1)-W.diff().abs().sum(1)*cost
+    W=w.shift(1).fillna(0);pnl=-(W*R.fillna(0)).sum(1)+(W*F).sum(1)-W.diff().abs().sum(1)*cost        # simple returns: a short gains at most 100%
     if hedge:
-        g=W.sum(1);pnl+=g*np.log(btc).diff().reindex(P.index).fillna(0)-g*btc_f.reindex(P.index).fillna(0)-g.diff().abs().fillna(0)*cost
-    return pnl[pnl.index>=pd.Timestamp('2021-01-15')],on
+        g=W.sum(1);pnl+=g*btc.pct_change().reindex(P.index).fillna(0)-g*btc_f.reindex(P.index).fillna(0)-g.diff().abs().fillna(0)*cost
+    pnl=np.log1p(pnl.clip(lower=-0.99));return pnl[pnl.index>=pd.Timestamp('2021-01-15')],on
 
 def stats(r):
     eq=r.cumsum();m=r.groupby(r.index.to_period('M')).sum()
