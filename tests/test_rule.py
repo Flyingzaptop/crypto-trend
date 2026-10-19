@@ -21,3 +21,10 @@ def test_uptrend_is_long():
 def test_backtest_uses_yesterdays_position():
     P=fake();ret,N=trend.backtest(P);R=np.log(P).diff();T=trend.target_positions(P)
     d=ret.index[100];assert abs(ret[d]-((T.shift(1).loc[d]*R.loc[d]).sum()-T.shift(1).diff().abs().loc[d].sum()*1e-3))<1e-12
+
+def test_late_listing_does_not_change_earlier_positions():
+    P=fake();Q=P.copy();Q['XUSDT']=fake(seed=1).iloc[:,0];Q.iloc[:300,2]=np.nan   # 3rd coin listed on day 300
+    N=trend.target_positions(P);M=trend.target_positions(Q)
+    pd.testing.assert_frame_equal(N.iloc[:399],M.iloc[:399,:2])                  # signal needs 100 days -> enters on day 399
+    assert M.iloc[:399,2].isna().all() and M.iloc[440:,2].notna().all()
+    r1,_=trend.backtest(P);r2,_=trend.backtest(Q);d=M.iloc[:,2].first_valid_index();pd.testing.assert_series_equal(r1[r1.index<=d],r2[r2.index<=d])

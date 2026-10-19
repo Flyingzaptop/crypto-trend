@@ -1,4 +1,6 @@
-results/
+/results/
 __pycache__/
 *.csv
 !docs/*.csv
+data/
+!docs/results/*.csv
