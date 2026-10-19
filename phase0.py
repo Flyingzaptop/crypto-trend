@@ -21,7 +21,7 @@ def load(cur):
     t=dh.sample(cur).copy();d=dh.dvol_hourly(cur)/100
     t['T']=(t.expiry-t.time).dt.total_seconds()/86400/365;t['Td']=t['T']*365
     t=t[(t.Td>=1)&(t.Td<=60)&(t.price>0)&(t.mark_price>0)].sort_values('time')
-    dv=d.rename('dvol').to_frame();dv.index.name='time'
+    dv=d.rename('dvol').to_frame();dv.index=dv.index.astype('datetime64[ns]');dv.index.name='time';t['time']=t.time.astype('datetime64[ns]')
     t=pd.merge_asof(t,dv.reset_index().sort_values('time'),on='time',direction='backward')
     t['k']=t.strike/t.index_price;t['x']=np.log(t.k)/(t.dvol*np.sqrt(t['T']))
     t['otm']=np.where(t.call,t.k>=1,t.k<1)
