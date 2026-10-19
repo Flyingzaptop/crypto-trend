@@ -1,0 +1,92 @@
+{
+ "selection_end": "2023-12-31",
+ "pool": [
+  "BTCUSDT",
+  "ETHUSDT",
+  "SOLUSDT",
+  "ZECUSDT",
+  "NEARUSDT",
+  "DOGEUSDT",
+  "AVAXUSDT",
+  "FETUSDT",
+  "FILUSDT",
+  "ONEUSDT",
+  "VTHOUSDT",
+  "SANDUSDT",
+  "MOVRUSDT",
+  "CAKEUSDT",
+  "ARUSDT"
+ ],
+ "BTC_10bp_full": {
+  "cagr_pct": 23.9,
+  "vol_pct": 23.6,
+  "sharpe": 0.91,
+  "max_dd_pct": 26.3
+ },
+ "BTC_10bp_after": {
+  "cagr_pct": 21.0,
+  "vol_pct": 21.5,
+  "sharpe": 0.88,
+  "max_dd_pct": 21.8
+ },
+ "BTC_20bp_full": {
+  "cagr_pct": 20.1,
+  "vol_pct": 23.6,
+  "sharpe": 0.77,
+  "max_dd_pct": 28.6
+ },
+ "BTC_20bp_after": {
+  "cagr_pct": 16.4,
+  "vol_pct": 21.6,
+  "sharpe": 0.71,
+  "max_dd_pct": 23.6
+ },
+ "BTC+ETH_10bp_full": {
+  "cagr_pct": 27.4,
+  "vol_pct": 22.6,
+  "sharpe": 1.07,
+  "max_dd_pct": 25.8
+ },
+ "BTC+ETH_10bp_after": {
+  "cagr_pct": 24.5,
+  "vol_pct": 22.6,
+  "sharpe": 0.97,
+  "max_dd_pct": 22.5
+ },
+ "BTC+ETH_20bp_full": {
+  "cagr_pct": 23.4,
+  "vol_pct": 22.6,
+  "sharpe": 0.93,
+  "max_dd_pct": 27.5
+ },
+ "BTC+ETH_20bp_after": {
+  "cagr_pct": 19.8,
+  "vol_pct": 22.6,
+  "sharpe": 0.8,
+  "max_dd_pct": 25.6
+ },
+ "pool_10bp_full": {
+  "cagr_pct": 42.1,
+  "vol_pct": 22.7,
+  "sharpe": 1.55,
+  "max_dd_pct": 16.4
+ },
+ "pool_10bp_after": {
+  "cagr_pct": 23.3,
+  "vol_pct": 21.4,
+  "sharpe": 0.98,
+  "max_dd_pct": 16.4
+ },
+ "pool_20bp_full": {
+  "cagr_pct": 37.9,
+  "vol_pct": 22.7,
+  "sharpe": 1.42,
+  "max_dd_pct": 19.7
+ },
+ "pool_20bp_after": {
+  "cagr_pct": 18.9,
+  "vol_pct": 21.4,
+  "sharpe": 0.81,
+  "max_dd_pct": 19.7
+ }
+}

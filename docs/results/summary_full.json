@@ -1,0 +1,55 @@
+{
+ "selection_end": null,
+ "pool": [
+  "BTCUSDT",
+  "ETHUSDT",
+  "NEARUSDT",
+  "SUIUSDT",
+  "DOGEUSDT",
+  "ENAUSDT",
+  "WLDUSDT",
+  "TRUMPUSDT",
+  "ONEUSDT",
+  "VTHOUSDT",
+  "SAGAUSDT",
+  "MOVRUSDT",
+  "ARUSDT",
+  "TUTUSDT"
+ ],
+ "BTC_10bp_full": {
+  "cagr_pct": 23.9,
+  "vol_pct": 23.6,
+  "sharpe": 0.91,
+  "max_dd_pct": 26.3
+ },
+ "BTC_20bp_full": {
+  "cagr_pct": 20.1,
+  "vol_pct": 23.6,
+  "sharpe": 0.77,
+  "max_dd_pct": 28.6
+ },
+ "BTC+ETH_10bp_full": {
+  "cagr_pct": 27.4,
+  "vol_pct": 22.6,
+  "sharpe": 1.07,
+  "max_dd_pct": 25.8
+ },
+ "BTC+ETH_20bp_full": {
+  "cagr_pct": 23.4,
+  "vol_pct": 22.6,
+  "sharpe": 0.93,
+  "max_dd_pct": 27.5
+ },
+ "pool_10bp_full": {
+  "cagr_pct": 39.9,
+  "vol_pct": 22.5,
+  "sharpe": 1.49,
+  "max_dd_pct": 14.8
+ },
+ "pool_20bp_full": {
+  "cagr_pct": 35.9,
+  "vol_pct": 22.5,
+  "sharpe": 1.37,
+  "max_dd_pct": 15.1
+ }
+}

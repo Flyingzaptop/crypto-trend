@@ -1,0 +1,17 @@
+strategy,from,cagr_pct,vol_pct,sharpe,max_dd_pct,corr_with_trend,combo_sharpe,trend_sharpe_same_days
+"0 trend (daily, current)",2018,27.4,22.6,1.07,25.8,,,
+"0 trend (daily, current)",2024,24.5,22.6,0.97,22.5,,,
+1 funding carry (unlevered),2018,12.0,1.5,7.34,1.9,0.03,5.78,0.93
+1 funding carry (unlevered),2024,5.9,0.7,8.27,1.9,-0.04,4.3,0.99
+2a mean reversion daily,2018,-18.2,22.2,-0.9,84.4,-0.36,0.15,1.07
+2a mean reversion daily,2024,-29.9,21.5,-1.66,66.4,-0.32,-0.55,0.97
+2b mean reversion 4h,2018,-57.3,21.6,-3.95,99.9,-0.24,-2.35,1.07
+2b mean reversion 4h,2024,-65.7,21.1,-5.07,95.0,-0.23,-3.25,0.97
+3a day-of-week (fit<2024),2018,7.0,23.2,0.29,41.5,0.04,0.91,1.07
+3a day-of-week (fit<2024),2024,3.4,21.7,0.15,30.2,-0.02,0.82,0.97
+3b hour-of-day (fit<2024),2018,-93.4,21.3,-12.79,100.0,0.05,-8.15,1.07
+3b hour-of-day (fit<2024),2024,-96.6,20.4,-16.55,100.0,0.12,-10.19,0.97
+4 trend 4h,2018,7.4,23.7,0.3,46.0,0.48,0.78,1.07
+4 trend 4h,2024,-7.0,23.6,-0.31,36.8,0.46,0.39,0.97
+5 trend + funding filter,2018,25.8,21.9,1.05,24.4,0.99,1.06,1.07
+5 trend + funding filter,2024,22.9,22.2,0.93,19.8,0.99,0.95,0.97
