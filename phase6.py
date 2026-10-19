@@ -23,13 +23,13 @@ def asset(r):
     return 'BTC' if 'bitcoin' in t or 'btc' in t else 'ETH' if 'ethereum' in t or 'eth ' in t else None
 
 def snap_price(h,ts,maxage):
-    if not h:return np.nan
+    if not h:return (np.nan,None)
     t=np.array([x['t'] for x in h]);p=np.array([x['p'] for x in h]);i=np.searchsorted(t,ts.timestamp(),side='right')-1
-    return p[i] if i>=0 and ts.timestamp()-t[i]<=maxage.total_seconds() else np.nan
+    return (p[i],pd.Timestamp(t[i],unit='s',tz='UTC')) if i>=0 and ts.timestamp()-t[i]<=maxage.total_seconds() else (np.nan,None)
 
 def build():
     M=pd.read_parquet(f'{d6.ROOT}/sample.parquet');M['kind']=M.question.map(kind);M['K']=M.question.map(strike);M['asset']=M.apply(asset,axis=1)
-    M['end']=pd.to_datetime(M.end,utc=True);M['start']=pd.to_datetime(M.start,utc=True,errors='coerce')
+    M['end']=pd.to_datetime(M.end,utc=True,format='ISO8601');M['start']=pd.to_datetime(M.start,utc=True,errors='coerce',format='ISO8601')
     m1={a:data_m1.load(f'{a}USDT')[['close','high','low']] for a in ('BTC','ETH')}
     for a in m1:m1[a].index=m1[a].index.tz_localize('UTC').floor('min');m1[a]=m1[a][~m1[a].index.duplicated()]
     dv={a:(dh.dvol_hourly(a)/100).tz_localize('UTC') for a in ('BTC','ETH')}
@@ -40,9 +40,9 @@ def build():
         try:h=__import__('json').load(open(path))
         except Exception:continue
         for hn,dt_ in HOR.items():
-            ts=r.end-dt_;px=snap_price(h,ts,MAXAGE[hn])
-            if not np.isfinite(px):continue
-            row={'market_id':r.market_id,'tag':r.tag,'asset':r.asset,'kind':r.kind,'hor':hn,'end':r.end,'ts':ts,'price':px,'y':float(r.yes_won),'K':r.K,'question':r.question}
+            px,ts=snap_price(h,r.end-dt_,MAXAGE[hn])                             # model uses the time of the market quote
+            if not np.isfinite(px) or ts is None:continue
+            row={'market_id':r.market_id,'cat':r.cat,'tag':r.tag,'asset':r.asset,'kind':r.kind,'hor':hn,'end':r.end,'ts':ts,'price':px,'y':float(r.yes_won),'K':r.K,'question':r.question}
             if r.asset in m1 and r.kind in ('above','updown','touch') and ts>m1[r.asset].index[0] and ts<m1[r.asset].index[-1]:
                 c=m1[r.asset];S=c.close.asof(ts-pd.Timedelta('1min'));tau=(r.end-ts).total_seconds()/(365*86400)
                 for nm,sv in (('har',har[r.asset].asof((ts-pd.Timedelta('1D')).normalize())),('dvol',dv[r.asset].asof(ts))):

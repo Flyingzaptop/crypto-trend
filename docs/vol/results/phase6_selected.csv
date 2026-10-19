@@ -1,0 +1,7 @@
+rule,cost,param,hor,first_n,first_mean_ret,first_t,second_n,second_mean_ret,second_t,works
+R1 tails NO,0.01,0.1,7d,125,0.0087,4.62,227,-0.0102,-1.14,False
+R1 tails NO,0.02,0.1,7d,125,-0.0014,-0.76,227,-0.0201,-2.27,False
+R2 model dvol,0.01,0.05,1h,131,-0.1496,-2.16,206,-0.0777,-0.47,False
+R2 model dvol,0.02,0.05,1h,131,-0.1628,-2.4,206,-0.1333,-0.96,False
+R2 model har,0.01,0.05,1h,131,-0.1515,-2.19,192,-0.0962,-0.55,False
+R2 model har,0.02,0.05,1h,131,-0.1647,-2.43,192,-0.1515,-1.05,False
