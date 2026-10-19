@@ -37,8 +37,8 @@ def pnl(N,R,Fbar):
 def daily(r):return r.groupby(r.index.floor('D')).sum()
 
 def combine(a,b,ann=365):
-    j=pd.concat([a,b],axis=1).dropna();w=(0.2/np.sqrt(ann))/j.rolling(60).std().shift(1);c=(j*w).mean(1)
-    return (c*(0.2/np.sqrt(ann))/c.rolling(60).std().shift(1)).dropna()
+    """50/50 risk mix: each leg divided by its own (full-period) vol, then rescaled to 20% vol."""
+    j=pd.concat([a,b],axis=1).dropna();c=(j/j.std()).mean(1);return c*(0.2/np.sqrt(ann))/c.std()
 
 if __name__=='__main__':
     D=bars('1D');D=D[D.index<pd.Timestamp.now().floor('D')];R=np.log(D).diff()
