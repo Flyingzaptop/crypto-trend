@@ -5,8 +5,9 @@ from ml1 import PARAMS
 
 SEL=('2021-01-01','2023-12-31');VER='2024-01-01'
 
-def weekly(C,Q,F,n=50):
-    R=np.log(C).diff();sun=C.index[C.index.dayofweek==6];U=panel.universe(C,Q,F,n).loc[sun]
+def weekly(C,Q,F,n=50,dow=6,perp=True):
+    """dow: rebalance day (6 = Sunday close); perp=False ranks all spot pairs (for 2019-20, before alt perps existed)."""
+    R=np.log(C).diff();sun=C.index[C.index.dayofweek==dow];U=panel.universe(C,Q,F,n,perp=perp).loc[sun]
     lw=np.log(C.ffill(limit=6)).loc[sun];W={}           # last close within the week (delisted coins exit at their last close)
     W['mom1']=lw.diff(1);W['mom4']=lw.diff(4);W['mom12']=lw.diff(12)
     W['vol4']=R.rolling(28,min_periods=20).std().loc[sun];W['fund1']=F.fillna(0).rolling(7).sum().loc[sun];W['fund4']=F.fillna(0).rolling(28).sum().loc[sun]

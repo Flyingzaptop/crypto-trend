@@ -1,0 +1,6 @@
+case,cost_bp,2021-23,2024-26,coin_weeks,pnl_sum,share_of_total_pnl,total_pnl_sum
+"all positions, 10 bp",10.0,0.63,2.18,,,,
+"all positions, 20 bp",20.0,0.45,1.99,,,,
+"all positions, 40 bp",40.0,0.09,1.59,,,,
+without positions in coins whose perp was already delisted (34 coin-weeks),10.0,0.59,2.04,,,,
+short positions in squeeze weeks (avg funding < -0.1%/day),,,,215.0,-0.309,-0.09,3.438

@@ -42,9 +42,9 @@ def load():
     for k,x in (('close',C),('qvol',Q),('fund',F)):x.to_parquet(f'{md.CACHE}/panel_{k}.parquet')
     return C,Q,F
 
-def universe(C,Q,F,n,min_days=90):
+def universe(C,Q,F,n,min_days=90,perp=True):
     """Bool frame: coin is in the top-n by 30-day average turnover, has a live perp (funding seen) and min_days of history."""
-    live=F.notna().cumsum()>0;age=C.notna().cumsum()>=min_days;ok=live&age&C.notna()
+    live=F.notna().cumsum()>0 if perp else C.notna();age=C.notna().cumsum()>=min_days;ok=live&age&C.notna()
     tv=Q.rolling(30,min_periods=20).mean().where(ok);return tv.rank(axis=1,ascending=False)<=n
 
 if __name__=='__main__':

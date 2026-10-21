@@ -7,7 +7,8 @@ R='docs/ml/results'
 def trials():
     s=[]
     d=pd.read_csv(f'{R}/ml1_variants.csv');s+=list(d[(d.tag=='real')&d.series.str.startswith('h')].ver_sharpe/np.sqrt(365))
-    d=pd.read_csv(f'{R}/rl1_configs.csv');d=d[~d.config.str.contains('BASE|MIRROR')];s+=list(d.test_sharpe_mean/np.sqrt(365))
+    import os
+    if os.path.exists(f'{R}/rl1_configs.csv'):d=pd.read_csv(f'{R}/rl1_configs.csv');d=d[~d.config.str.contains('BASE|MIRROR')];s+=list(d.test_sharpe_mean/np.sqrt(365))
     d=pd.read_csv(f'{R}/x1.csv');d=d[d.strategy.str.startswith('(')];s+=list(d.ver_sharpe/np.sqrt(365))
     d=pd.read_csv(f'{R}/ml2.csv');d=d[d.series.str.match(r'^(lgbm|mlp) ')];s+=list(d.ver_sharpe/np.sqrt(365))
     d=pd.read_csv(f'{R}/ml3.csv');s+=list(d[d.series.str.startswith(('ML','mom4'))].ver_sharpe/np.sqrt(365))
