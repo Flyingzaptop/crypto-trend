@@ -1,0 +1,15 @@
+portfolio,strategy,early_sharpe,early_cagr_pct,early_max_dd_pct,2024-26_sharpe,2024-26_cagr_pct,2024-26_max_dd_pct,selected,useful
+crypto BTC+ETH,trend,0.53,12.3,25.8,0.97,24.5,22.5,False,False
+crypto BTC+ETH,meanrev,-1.42,-27.5,63.5,-1.11,-22.3,55.0,False,False
+crypto BTC+ETH,mix50,-0.24,-4.9,38.1,0.37,8.4,28.0,False,False
+crypto BTC+ETH,S1 rise->T,0.51,12.3,27.0,1.18,30.9,22.0,True,False
+crypto BTC+ETH,S1' rise->M,-1.07,-21.2,58.3,-1.66,-31.5,68.3,False,False
+crypto BTC+ETH,S2 high->T,-0.34,-7.3,40.0,-0.17,-3.8,33.4,False,False
+crypto BTC+ETH,S2' high->M,-0.29,-6.4,37.6,0.31,7.5,42.4,False,False
+ETF 19,trend,-0.22,-3.2,52.8,-0.79,-10.6,30.5,False,False
+ETF 19,meanrev,-1.35,-19.3,94.3,-0.69,-10.1,30.5,False,False
+ETF 19,mix50,-0.52,-7.7,73.4,-0.73,-9.5,29.8,False,False
+ETF 19,S1 rise->T,-0.47,-5.8,65.1,-0.7,-7.7,23.5,True,False
+ETF 19,S1' rise->M,-1.69,-21.0,96.0,-1.77,-20.1,45.7,False,False
+ETF 19,S2 high->T,-1.18,-15.3,90.0,-1.52,-18.2,47.4,False,False
+ETF 19,S2' high->M,-0.89,-11.4,83.0,-1.0,-12.3,30.6,False,False

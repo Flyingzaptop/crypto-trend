@@ -23,9 +23,10 @@ def perp_daily(sym):
     d=pd.concat(parts);s=pd.Series(d[4].astype(float).values,index=data_m1._ts(d[0]),name=sym).sort_index()
     s=s[~s.index.duplicated()];s.to_frame().to_parquet(path);return s
 
-def book(S,R,ann,vw=20,rw=60,target_vol=0.20,cap=1.0):
-    """Same sizing as trend.target_positions, for any raw signal S in [-1,1]; windows in bars."""
-    S=S*(0.5/(R.rolling(vw).std()*np.sqrt(ann))).clip(upper=2)
+def book(S,R,ann,vw=20,rw=60,target_vol=0.20,cap=1.0,vol=None):
+    """Same sizing as trend.target_positions, for any raw signal S in [-1,1]; windows in bars.
+    vol: optional annualized per-asset vol estimate replacing the trailing vw-bar realized vol."""
+    S=S*(0.5/(R.rolling(vw).std()*np.sqrt(ann) if vol is None else vol.reindex_like(R))).clip(upper=2)
     pre=S/(S.shift(1)*R).rolling(rw,min_periods=rw//2).std();pre=pre.div(pre.notna().sum(1),axis=0)
     pr=(pre.shift(1)*R).sum(1,min_count=1);N=pre.mul((target_vol/np.sqrt(ann))/pr.rolling(rw,min_periods=rw//2).std(),axis=0)
     return N.div((N.abs().sum(1)/cap).clip(lower=1),axis=0)
