@@ -6,3 +6,4 @@ data/
 !docs/results/*.csv
 !docs/vol/results/*.csv
 !docs/ml/results/*.csv
+docs/ml/results/rl1_runs/
