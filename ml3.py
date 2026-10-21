@@ -5,8 +5,8 @@ from ml1 import PARAMS
 
 SEL=('2021-01-01','2023-12-31');VER='2024-01-01'
 
-def weekly(C,Q,F):
-    R=np.log(C).diff();sun=C.index[C.index.dayofweek==6];U=panel.universe(C,Q,F,50).loc[sun]
+def weekly(C,Q,F,n=50):
+    R=np.log(C).diff();sun=C.index[C.index.dayofweek==6];U=panel.universe(C,Q,F,n).loc[sun]
     lw=np.log(C.ffill(limit=6)).loc[sun];W={}           # last close within the week (delisted coins exit at their last close)
     W['mom1']=lw.diff(1);W['mom4']=lw.diff(4);W['mom12']=lw.diff(12)
     W['vol4']=R.rolling(28,min_periods=20).std().loc[sun];W['fund1']=F.fillna(0).rolling(7).sum().loc[sun];W['fund4']=F.fillna(0).rolling(28).sum().loc[sun]
@@ -46,7 +46,7 @@ if __name__=='__main__':
     for k,r in S.items():
         r=r['2021-01-04':];out.append({'series':k,**{f'sel_{a}':b for a,b in md.stats(r[:SEL[1]]).items()},**{f'ver_{a}':b for a,b in md.stats(r[VER:]).items()},
                                      **{str(y):b for y,b in md.by_year(r).items()}})
-    T=pd.DataFrame(out);T.to_csv('docs/ml/results/ml3.csv',index=False)
+    T=pd.DataFrame(out);T.to_csv('docs/ml/results/ml3.csv',index=False);pd.DataFrame(S)['2021-01-04':].to_csv('docs/ml/results/ml3_daily_returns.csv')
     icy=ic.groupby(ic.index.year).mean().round(3);pd.DataFrame({'ic_mean':icy,'weeks':ic.groupby(ic.index.year).size()}).to_csv('docs/ml/results/ml3_ic.csv')
     to=daily(book(P,U),C).diff().abs().sum(1);print('avg coins in universe',round(U.sum(1)['2021':].mean(),1),'| L/S turnover per week',round(to['2021':].sum()/len(U['2021':]),2))
     pd.set_option('display.width',300);pd.set_option('display.max_columns',40);print(T.to_string(index=False));print('IC by year',icy.to_dict(),'| IC 2021-23',round(ic[:SEL[1]].mean(),3),'2024+',round(ic[VER:].mean(),3))
