@@ -31,10 +31,13 @@ def yahoo_ohlc(t):
     f=d.adj/d.close;d['open']=d.open*f;d['close']=d.adj;d=d[['open','close']]
     os.makedirs(CACHE,exist_ok=True);d.to_parquet(path);return d
 
-def pnl(N,R,F,cost_bp=10.0):
-    """Same accounting as trend.backtest: N row t = position held during t+1."""
+def pnl(N,R,F,cost_bp=10.0,simple=False):
+    """Same accounting as trend.backtest: N row t = position held during t+1.
+    simple=True: book return = sum of w*(e^r - 1), returned as log(1 + that). Needed for high-vol books (alts), where a weighted
+    sum of log returns understates longs and overstates shorts by ~sigma^2/2 per year."""
     N=N.shift(1);N0=N.fillna(0);F=F.reindex(R.index).fillna(0)
-    ret=(N0*R).sum(1)-(N0*F).sum(1)-N0.diff().abs().sum(1)*cost_bp*1e-4
+    g=(N0*(np.expm1(R) if simple else R)).sum(1)-(N0*F).sum(1)-N0.diff().abs().sum(1)*cost_bp*1e-4
+    ret=np.log1p(g.clip(lower=-0.99)) if simple else g
     return ret[N.notna().any(axis=1)]
 
 def stats(r,ann=365):
