@@ -1,0 +1,3 @@
+coin,variant,cost_bp,seeds,val_sharpe,test_sharpe,test_alpha_sharpe,alpha_pos,beta,cagr_pct,max_dd_pct,trades_per_day,time_in_market,median_hold_min,corr_trend_sign,corr_trend_size,pass
+BTC,A,5,3,-0.33,-0.44,-0.45,0,0.0,-0.03,0.1,0.0,0.0,1.0,0.01,0.01,False
+ETH,A,5,1,1.0,-0.62,-0.62,0,0.0,-0.7,1.9,0.0,0.0,1.0,0.04,0.05,False
