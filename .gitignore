@@ -9,3 +9,5 @@ data/
 docs/ml/results/rl1_runs/
 docs/ml/results/rlm1_runs/*.parquet
 docs/ml/results/rlm1_runs/*.pt
+docs/ml/results/rlm2_runs/*.pt
+data/ml/gold/

@@ -4,6 +4,7 @@ import os,json,argparse,numpy as np,pandas as pd
 import data_m1
 
 OUT='docs/ml/results';RUNS=f'{OUT}/rlm1_runs';CACHE=f'{data_m1.ROOT}/ml/m1feat'
+BARS={'XAUUSD':f'{data_m1.ROOT}/ml/gold/xauusd_m1.parquet'}
 TRAIN=('2019-01-01','2022-12-31 23:59');VAL=('2023-01-01','2023-12-31 23:59');WIN=240;EP=10080;K,TAU=1e-7,1440;SCALE=1e4
 QS=int(os.environ.get('RLM1_QUARTER',1_500_000))      # steps per quarter of training (6M total)
 CTX=['ret15','ret60','ret240','ret1440','ret4320','ret10080','lsv60','lsv43200','rng1440','rng10080','hs','hc','ds','dc']
@@ -14,8 +15,12 @@ def prep(sym):
     """Minute grid with features; cached as npz. Rows = minutes; decision at t uses data up to the close of minute t."""
     path=f'{CACHE}/{sym}.npz'
     if not os.path.exists(path):
-        m=data_m1.load(sym).close;m.index=m.index.floor('min');m=m[~m.index.duplicated()]
-        idx=pd.date_range('2018-11-01',m.index[-1],freq='min');c=m.reindex(idx).ffill();lp=np.log(c);r=lp.diff().fillna(0)
+        if sym in BARS:                                   # bar series (market closures): one step per bar
+            g=pd.read_parquet(BARS[sym]);c=pd.Series(g.close.values,index=pd.to_datetime(g.timestamp).dt.tz_localize(None)).sort_index();c=c[~c.index.duplicated()];idx=c.index
+        else:
+            m=data_m1.load(sym).close;m.index=m.index.floor('min');m=m[~m.index.duplicated()]
+            idx=pd.date_range('2018-11-01',m.index[-1],freq='min');c=m.reindex(idx).ffill()
+        lp=np.log(c);r=lp.diff().fillna(0)
         s1440=r.rolling(1440).std();s60=r.rolling(60).std();s43200=r.rolling(43200,min_periods=20000).std()
         X=pd.DataFrame(index=idx)
         for n in (15,60,240,1440,4320,10080):X[f'ret{n}']=(lp-lp.shift(n))/(s1440*np.sqrt(n))
@@ -23,7 +28,7 @@ def prep(sym):
         for n in (1440,10080):hi=c.rolling(n).max();lo=c.rolling(n).min();X[f'rng{n}']=((c-lo)/(hi-lo)).fillna(0.5)*2-1
         h=idx.hour+idx.minute/60;d=idx.dayofweek+h/24
         X['hs'],X['hc'],X['ds'],X['dc']=np.sin(2*np.pi*h/24),np.cos(2*np.pi*h/24),np.sin(2*np.pi*d/7),np.cos(2*np.pi*d/7)
-        dc_=c.resample('1D').last();ld=np.log(dc_);sd=ld.diff().rolling(20).std();Dd=pd.DataFrame(index=dc_.index)
+        dc_=c.resample('1D').last().dropna();ld=np.log(dc_);sd=ld.diff().rolling(20).std();Dd=pd.DataFrame(index=dc_.index)
         for n in (20,50,100):Dd[f'dsma{n}']=(ld-np.log(dc_.rolling(n).mean()))/(sd*np.sqrt(n))
         for n in (20,60,120):Dd[f'dret{n}']=(ld-ld.shift(n))/(sd*np.sqrt(n))
         Dd=Dd.shift(1)                                   # value for day D uses closes up to D-1 (completed days only)
@@ -36,8 +41,8 @@ def prep(sym):
     return t,d['r'],d['lp'],d['s'],np.nan_to_num(d['z']),d['X'],ok
 
 class Data:
-    def __init__(s,sym,daily=False):
-        s.t,s.r,s.lp,s.sig,s.z,X,ok=prep(sym);X=X if daily else X[:,:len(CTX)];i0,i1=s.span(TRAIN)
+    def __init__(s,sym,daily=False,train=TRAIN):
+        s.train=train;s.t,s.r,s.lp,s.sig,s.z,X,ok=prep(sym);X=X if daily else X[:,:len(CTX)];i0,i1=s.span(train)
         mu,sd=np.nanmean(X[i0:i1],0),np.nanstd(X[i0:i1],0)+1e-9;s.X=np.clip(np.nan_to_num((X-mu)/sd),-10,10).astype('float32')
         s.rbar=s.r[i0:i1].mean();s.first=int(np.argmax(ok[WIN:]))+WIN
     def span(s,p):return int(np.searchsorted(s.t,pd.Timestamp(p[0]))),int(np.searchsorted(s.t,pd.Timestamp(p[1]),side='right'))
@@ -65,7 +70,7 @@ class Book:
 def make_vec(D,n,cost,penalty,seed):
     import gymnasium as gym
     from stable_baselines3.common.vec_env import VecEnv
-    i0,i1=D.span(TRAIN);i0=max(i0,D.first)
+    i0,i1=D.span(D.train);i0=max(i0,D.first)
     class V(VecEnv):
         def __init__(s):
             s.B=Book(D,n);s.rng=np.random.default_rng(seed);s.k=np.zeros(n,dtype=np.int64)
