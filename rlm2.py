@@ -43,10 +43,12 @@ def run(job):
     json.dump(res,open(path,'w'),indent=1);return tg,{k:vbest[k] for k in ('sharpe','alpha_sharpe','trades_per_day','time_in_market')}
 
 if __name__=='__main__':
-    a=argparse.ArgumentParser();a.add_argument('--market',required=True);a.add_argument('--jobs',type=int,default=4);a=a.parse_args()
+    a=argparse.ArgumentParser();a.add_argument('--market',required=True);a.add_argument('--jobs',type=int,default=4)
+    a.add_argument('--part',default='0/1',help="k[,k2]/n: run jobs whose index mod n is in {k,...} (split one market across machines)");a=a.parse_args()
     os.makedirs(RUNS,exist_ok=True);rlm1.prep(a.market)
     J=[(a.market,v,w,ent,wd,s) for v,w,ent,wd in points() for s in range(3)]
     J.sort(key=lambda j:-j[2])                                   # widest first: the long jobs do not end up alone at the tail
+    ks,n=a.part.split('/');ks={int(x) for x in ks.split(',')};J=[j for i,j in enumerate(J) if i%int(n) in ks]   # e.g. '0,2/3'
     from multiprocessing import Pool
     with Pool(a.jobs) as p:
         for tg,r in p.imap_unordered(run,J):print(tg,r,flush=True)
