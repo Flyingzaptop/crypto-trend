@@ -1,0 +1,2 @@
+market,variant,space,depth,width,ent,wd,seeds,params,val_sharpe,val_alpha_sharpe,val_trades_per_day,val_time_in_market,val_corr_trend_sign,train_sharpe,train_alpha_sharpe,train_trades_per_day,train_time_in_market,train_corr_trend_sign,point
+BTCUSDT,C,abs,1,16,0.01,0.0,2,8580,0.0,0.0,0.0,0.0,,-0.42,-0.425,0.0,0.0,0.038,C abs d1 w16

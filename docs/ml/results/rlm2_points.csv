@@ -1,0 +1,17 @@
+market,variant,space,depth,width,ent,wd,seeds,params,val_sharpe,val_alpha_sharpe,val_trades_per_day,val_time_in_market,val_corr_trend_sign,train_sharpe,train_alpha_sharpe,train_trades_per_day,train_time_in_market,train_corr_trend_sign,point
+BTCUSDT,C,abs,1,16,0.01,0.0,2,8580,0.0,0.0,0.0,0.0,,-0.42,-0.425,0.0,0.0,0.038,C abs d1 w16
+BTCUSDT,C,abs,1,64,0.01,0.0,2,34308,-5.16,-5.34,0.25,0.0,0.137,-3.23,-3.305,0.25,0.0,0.018,C abs d1 w64
+BTCUSDT,C,abs,1,256,0.01,0.0,2,137220,-14.81,-15.045,9.1,0.004,0.04,-9.745,-9.8,6.8,0.002,0.049,C abs d1 w256
+BTCUSDT,C,abs,2,16,0.01,0.0,2,9124,0.0,0.0,0.0,0.0,,0.0,0.0,0.0,0.0,,C abs d2 w16
+BTCUSDT,C,abs,2,64,0.01,0.0,2,42628,0.0,0.0,0.0,0.0,,-0.22,-0.21,0.0,0.0,0.021,C abs d2 w64
+BTCUSDT,C,abs,2,256,0.01,0.0,2,268804,-6.765,-6.895,0.85,0.0,0.046,-3.245,-3.215,0.65,0.0,0.051,C abs d2 w256
+BTCUSDT,C,abs,4,16,0.01,0.0,2,10212,0.0,0.0,0.0,0.0,,0.0,0.0,0.0,0.0,,C abs d4 w16
+BTCUSDT,C,delta,1,16,0.01,0.0,2,8597,0.0,0.0,0.0,0.0,,0.0,0.0,0.0,0.0,,C delta d1 w16
+BTCUSDT,C,delta,1,64,0.01,0.0,2,34373,0.0,0.0,0.0,0.0,,0.0,0.0,0.0,0.0,,C delta d1 w64
+BTCUSDT,C,delta,1,256,0.01,0.0,2,137477,0.0,0.0,0.0,0.0,,0.0,0.0,0.0,0.0,,C delta d1 w256
+BTCUSDT,C,delta,2,16,0.01,0.0,2,9141,0.0,0.0,0.0,0.0,,0.0,0.0,0.0,0.0,,C delta d2 w16
+BTCUSDT,C,delta,2,64,0.01,0.0,2,42693,0.0,0.0,0.0,0.0,,0.0,0.0,0.0,0.0,,C delta d2 w64
+BTCUSDT,C,delta,2,256,0.01,0.0,2,269061,0.0,0.0,0.0,0.0,,0.0,0.0,0.0,0.0,,C delta d2 w256
+BTCUSDT,C,delta,4,16,0.01,0.0,2,10229,0.0,0.0,0.0,0.0,,0.0,0.0,0.0,0.0,,C delta d4 w16
+BTCUSDT,C,delta,4,64,0.01,0.0,2,59333,0.0,0.0,0.0,0.0,,0.0,0.0,0.0,0.0,,C delta d4 w64
+BTCUSDT,C,delta,4,256,0.01,0.0,2,532229,0.0,0.0,0.0,0.0,,0.0,0.0,0.0,0.0,,C delta d4 w256
