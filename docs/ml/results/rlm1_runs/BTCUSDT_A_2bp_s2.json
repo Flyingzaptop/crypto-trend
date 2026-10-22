@@ -1,0 +1,61 @@
+{
+ "sym": "BTCUSDT",
+ "variant": "A",
+ "cost_bp": 2,
+ "seed": 2,
+ "val": [
+  {
+   "steps": 1500000,
+   "sharpe": -7.12,
+   "alpha_sharpe": -7.48,
+   "trades_per_day": 1.3,
+   "time_in_market": 0.0,
+   "corr_trend_sign": -0.072
+  },
+  {
+   "steps": 3000000,
+   "sharpe": -3.04,
+   "alpha_sharpe": -3.15,
+   "trades_per_day": 0.4,
+   "time_in_market": 0.0,
+   "corr_trend_sign": -0.036
+  },
+  {
+   "steps": 4500000,
+   "sharpe": -8.27,
+   "alpha_sharpe": -10.97,
+   "trades_per_day": 19.0,
+   "time_in_market": 0.011,
+   "corr_trend_sign": -0.016
+  },
+  {
+   "steps": 6000000,
+   "sharpe": -3.71,
+   "alpha_sharpe": -4.93,
+   "trades_per_day": 5.1,
+   "time_in_market": 0.003,
+   "corr_trend_sign": -0.051
+  }
+ ],
+ "test": {
+  "sharpe": -2.76,
+  "alpha_sharpe": -2.8,
+  "beta": 0.001,
+  "cagr_pct": -2.3,
+  "max_dd_pct": 6.2,
+  "trades_per_day": 0.4,
+  "time_in_market": 0.0,
+  "median_hold_min": 1.0,
+  "corr_trend_sign": 0.027,
+  "corr_trend_size": 0.019,
+  "by_year_return_pct": {
+   "2024": -3.6,
+   "2025": -1.2,
+   "2026": -1.6
+  }
+ },
+ "test_period": [
+  "2024-01-01 00:00:00",
+  "2026-10-21 23:58:00"
+ ]
+}
