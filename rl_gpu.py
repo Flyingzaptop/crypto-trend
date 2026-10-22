@@ -3,7 +3,7 @@ over N environments on tensors; PPO rollout, GAE and updates all on the device.
 usage:
   python rl_gpu.py check   [--device cpu]          equivalence vs the numpy Book (BTC and gold, 10k steps)
   python rl_gpu.py bench   [--device cuda]         steps/s on a short run
-  python rl_gpu.py run MARKET VARIANT WIDTH DEPTH ENT WD SEED [--device cuda] -> docs/ml/results/rlm2_runs/<tag>.json (train/val only)"""
+  python rl_gpu.py run MARKET VARIANT WIDTH DEPTH ENT WD SEED [abs|delta] [--device cuda] -> docs/ml/results/rlm2_runs/<tag>.json (train/val only)"""
 import os,sys,json,time,argparse,numpy as np,pandas as pd,torch
 import rlm1
 
@@ -47,9 +47,20 @@ def mlp(i,o,w,depth,gain):
     for _ in range(depth):l=torch.nn.Linear(d,w);torch.nn.init.orthogonal_(l.weight,np.sqrt(2));torch.nn.init.zeros_(l.bias);L+=[l,torch.nn.Tanh()];d=w
     l=torch.nn.Linear(d,o);torch.nn.init.orthogonal_(l.weight,gain);torch.nn.init.zeros_(l.bias);return torch.nn.Sequential(*L,l)
 
+NACT={'abs':3,'delta':4}
+def to_abs(a,pos,space):
+    """Action -> index of the new absolute position {0:-1, 1:0, 2:+1}. 'abs': the action is the position itself.
+    'delta': 0 hold, 1 go long, 2 go short, 3 close."""
+    if space=='abs':return a
+    keep=(pos+1).long();return torch.where(a==0,keep,torch.where(a==1,2,torch.where(a==2,0,torch.ones_like(a))))
+
 class Agent(torch.nn.Module):
-    """Separate actor and critic MLPs with tanh, orthogonal init (as SB3 MlpPolicy with net_arch=[w]*depth)."""
-    def __init__(s,dim,w,depth):super().__init__();s.pi=mlp(dim,3,w,depth,0.01);s.v=mlp(dim,1,w,depth,1.0)
+    """Separate actor and critic MLPs with tanh, orthogonal init (as SB3 MlpPolicy with net_arch=[w]*depth).
+    'delta': the policy's output bias makes P(hold) ~ 0.97 at the start."""
+    def __init__(s,dim,w,depth,space='abs'):
+        super().__init__();s.space=space;s.pi=mlp(dim,NACT[space],w,depth,0.01);s.v=mlp(dim,1,w,depth,1.0)
+        if space=='delta':
+            with torch.no_grad():s.pi[-1].bias[0]=float(np.log(0.97/0.01))
     def nparams(s):return sum(p.numel() for p in s.parameters())
 
 def evaluate(ag,T,period,cost):
@@ -58,19 +69,19 @@ def evaluate(ag,T,period,cost):
     B=TBook(T,len(st));B.start(st);P=torch.zeros(len(st),EP,dtype=torch.float64,device=T.dev);POS=torch.zeros_like(P)
     with torch.no_grad():
         for k in range(int(L.max())):
-            live=k<L;a=ag.pi(B.obs()).argmax(1);a=torch.where(live,a,(1+B.pos).long());r,_=B.act(a,cost,False)
+            live=k<L;a=to_abs(ag.pi(B.obs()).argmax(1),B.pos,ag.space);a=torch.where(live,a,(1+B.pos).long());r,_=B.act(a,cost,False)
             P[:,k]=torch.where(live,r,torch.zeros_like(r));POS[:,k]=torch.where(live,B.pos,torch.zeros_like(r));B.t=B.t.clamp(max=T.n-2)
     j=torch.arange(len(st),device=T.dev);P[j,L-1]-=POS[j,L-1].abs()*cost
     P,POS,L=P.cpu().numpy(),POS.cpu().numpy(),L.cpu().numpy()
     ts=np.concatenate([D.t[s+1:s+1+l] for s,l in zip(st,L)]);pnl=np.concatenate([P[j,:l] for j,l in enumerate(L)]);pos=np.concatenate([POS[j,:l] for j,l in enumerate(L)])
     return pd.DataFrame({'pnl':pnl,'pos':pos},index=ts)
 
-def train(market,variant,w,depth,ent,wd,seed,dev,cfg=CFG,on_quarter=None,log=None):
+def train(market,variant,w,depth,ent,wd,seed,dev,cfg=CFG,on_quarter=None,log=None,space='abs'):
     """PPO on device. Returns the agent with the best checkpoint by validation alpha-Sharpe and the per-quarter validation metrics."""
     torch.manual_seed(seed);rng=torch.Generator(device=dev).manual_seed(seed);V=rlm1.VARS[variant];gamma,lam=V['gamma'],V['gae']
     D=rlm1.Data(market,V['daily'],MKT[market]['train']);T=TData(D,dev);cost=MKT[market]['cost']*1e-4;pen_on=V['pen']
     i0,i1=D.span(D.train);i0=max(i0,D.first);N,Tn=cfg['n_env'],cfg['T']
-    ag=Agent(T.dim,w,depth).to(dev);opt=(torch.optim.AdamW(ag.parameters(),lr=cfg['lr'],eps=1e-5,weight_decay=wd) if wd>0 else torch.optim.Adam(ag.parameters(),lr=cfg['lr'],eps=1e-5))
+    ag=Agent(T.dim,w,depth,space).to(dev);opt=(torch.optim.AdamW(ag.parameters(),lr=cfg['lr'],eps=1e-5,weight_decay=wd) if wd>0 else torch.optim.Adam(ag.parameters(),lr=cfg['lr'],eps=1e-5))
     rs=lambda m:torch.randint(i0,i1-EP-2,(m,),generator=rng,device=dev)
     B=TBook(T,N);B.start(rs(N));k=torch.zeros(N,dtype=torch.long,device=dev);o=B.obs()
     obs=torch.zeros(Tn,N,T.dim,device=dev);act=torch.zeros(Tn,N,dtype=torch.long,device=dev);lpb=torch.zeros(Tn,N,device=dev)
@@ -82,7 +93,7 @@ def train(market,variant,w,depth,ent,wd,seed,dev,cfg=CFG,on_quarter=None,log=Non
         with torch.no_grad():
             for s in range(Tn):
                 obs[s]=o;lg=ag.pi(o);dist=torch.distributions.Categorical(logits=lg);a=dist.sample();act[s]=a;lpb[s]=dist.log_prob(a);val[s]=ag.v(o)[:,0]
-                r,pen=B.act(a,cost,True);r=(r-(pen if pen_on else 0))*SCALE;k+=1;dn=k>=EP;o=B.obs()
+                r,pen=B.act(to_abs(a,B.pos,space),cost,True);r=(r-(pen if pen_on else 0))*SCALE;k+=1;dn=k>=EP;o=B.obs()
                 if dn.any():                                            # time-limit truncation: bootstrap with V(terminal obs), as SB3
                     r=r+gamma*torch.where(dn,ag.v(o)[:,0].double(),torch.zeros_like(r))
                     m=int(dn.sum());B.t[dn]=rs(m);B.pos[dn]=0;B.held[dn]=0;B.flat[dn]=0;B.entry[dn]=0;k[dn]=0;o=B.obs()
@@ -127,12 +138,12 @@ if __name__=='__main__':
     cfg=dict(CFG,**{k:v for k,v in (('steps',a.steps),('n_env',a.n_env)) if v})
     if a.cmd=='check':r=check(dev);print(json.dumps(r,indent=1));json.dump(r,open('docs/ml/results/rl_gpu_equivalence.json','w'),indent=1)
     elif a.cmd in ('bench','run'):
-        m,v,w,d,ent,wd,seed=(a.args+['BTCUSDT','A','32','2','0.01','0','0'][len(a.args):]) if a.cmd=='bench' else a.args
-        w,d,ent,wd,seed=int(w),int(d),float(ent),float(wd),int(seed);tg=f'{m}_{v}_w{w}_d{d}_ent{ent:g}_wd{wd:g}_s{seed}'
+        m,v,w,d,ent,wd,seed,sp=(a.args+['BTCUSDT','A','32','2','0.01','0','0','abs'][len(a.args):])
+        w,d,ent,wd,seed=int(w),int(d),float(ent),float(wd),int(seed);tg=f'{m}_{v}_{sp}_w{w}_d{d}_ent{ent:g}_wd{wd:g}_s{seed}'
         if a.cmd=='bench':cfg['steps']=a.steps or cfg['n_env']*cfg['T']*8
-        ag,T,D,cost,tp,vals,vb,sec=train(m,v,w,d,ent,wd,seed,dev,cfg,log=tg)
+        ag,T,D,cost,tp,vals,vb,sec=train(m,v,w,d,ent,wd,seed,dev,cfg,log=tg,space=sp)
         sps=cfg['steps']/sec;print(f'{tg}: {cfg["steps"]} steps in {sec:.0f}s = {sps:,.0f} steps/s -> {6e6/sps/60:.1f} min per 6M (incl. 4 val evals)')
         if a.cmd=='run':
             tr=rlm1.metrics(evaluate(ag,T,MKT[m]['train'],cost),D,tp);os.makedirs(RUNS,exist_ok=True);torch.save(ag.state_dict(),f'{RUNS}/{tg}_policy.pt')
-            json.dump({'market':m,'variant':v,'width':w,'depth':d,'ent':ent,'wd':wd,'seed':seed,'params':ag.nparams(),'cfg':cfg,'sec':round(sec),
+            json.dump({'market':m,'variant':v,'space':sp,'width':w,'depth':d,'ent':ent,'wd':wd,'seed':seed,'params':ag.nparams(),'cfg':cfg,'sec':round(sec),
                        'val_curve':vals,'val':vb,'train':tr},open(f'{RUNS}/{tg}.json','w'),indent=1,default=float)
