@@ -1,0 +1,53 @@
+{
+ "run": "XAUUSD_C_abs_w64_d4_ent0.01_wd0_s0",
+ "val": {
+  "sharpe": -31.032,
+  "alpha_sharpe": -31.024,
+  "trades_per_day": 590.46,
+  "time_in_market": 0.4952,
+  "corr_trend_sign": 0.046200000000000005,
+  "corr_trend_size": 0.038,
+  "beta": -0.0688,
+  "cagr_pct": -100.0,
+  "max_dd_pct": 100.0
+ },
+ "val_reps_alpha": [
+  -30.92,
+  -31.04,
+  -30.96,
+  -31.17,
+  -31.03
+ ],
+ "val_probs": {
+  "flat": [
+   0.2501,
+   0.5114,
+   0.2386
+  ],
+  "in_pos": [
+   0.2554,
+   0.4982,
+   0.2464
+  ],
+  "flat_share": 0.5042164623105179,
+  "in_pos_share": 0.49578353768948213
+ },
+ "train": {
+  "sharpe": -30.744,
+  "alpha_sharpe": -30.76,
+  "trades_per_day": 591.28,
+  "time_in_market": 0.49560000000000004,
+  "corr_trend_sign": 0.0166,
+  "corr_trend_size": 0.0154,
+  "beta": 0.1176,
+  "cagr_pct": -100.0,
+  "max_dd_pct": 100.0
+ },
+ "train_reps_alpha": [
+  -30.78,
+  -30.8,
+  -30.76,
+  -30.7,
+  -30.76
+ ]
+}

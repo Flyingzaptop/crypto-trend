@@ -6,14 +6,24 @@ import glob,json,argparse,numpy as np,pandas as pd
 R='docs/ml/results';RUNS=f'{R}/rlm2_runs'
 TEST={'BTCUSDT':('2024-01-01','2099-01-01'),'ETHUSDT':('2024-01-01','2099-01-01'),'XAUUSD':('2024-01-01','2026-09-30 23:59')}
 
+M=('sharpe','alpha_sharpe','trades_per_day','time_in_market','corr_trend_sign')
 def load():
+    """One row per run: stochastic (5-repeat) train/val metrics from <tag>_stoch.json (addendum 6), argmax metrics for reference.
+    group: 'sweep' (abs, argmax-selected checkpoint), 'delta_se' (delta rerun, stochastic checkpoint),
+    'delta_argmax' (first delta batch, 25% checkpoint - excluded from selection), 'diag' (lr 5e-5 point - excluded)."""
     rows=[]
     for p in glob.glob(f'{RUNS}/*.json'):
+        if p.endswith('_stoch.json'):continue
         j=json.load(open(p))
         if 'depth' not in j:continue                                   # GPU-engine runs only
-        rows.append({k:j[k] for k in ('market','variant','space','width','depth','ent','wd','seed','params')}|
-                    {f'val_{k}':j['val'][k] for k in ('sharpe','alpha_sharpe','trades_per_day','time_in_market','corr_trend_sign')}|
-                    {f'train_{k}':j['train'][k] for k in ('sharpe','alpha_sharpe','trades_per_day','time_in_market','corr_trend_sign')}|{'file':p})
+        sp=p.replace('.json','_stoch.json');st=json.load(open(sp)) if __import__('os').path.exists(sp) else None
+        g='diag' if 'lr5e' in p else 'delta_se' if p.endswith('_se.json') else 'delta_argmax' if j['space']=='delta' else 'sweep'
+        r={k:j[k] for k in ('market','variant','space','width','depth','ent','wd','seed','params')}|{'group':g,'file':p}
+        r|={f'argmax_val_{k}':j['val'][k] for k in M}|{f'argmax_train_{k}':j['train'][k] for k in M}
+        if st:
+            r|={f'val_{k}':st['val'][k] for k in M}|{f'train_{k}':st['train'][k] for k in M}
+            pr=st.get('val_probs',{});r|={f'p_flat_{i}':v for i,v in enumerate(pr.get('flat',[]))}|{f'p_inpos_{i}':v for i,v in enumerate(pr.get('in_pos',[]))}
+        rows.append(r)
     return pd.DataFrame(rows)
 
 def plots(P):
@@ -42,18 +52,19 @@ def test(S):
         tp=rlm1.trend_pos(m) if m!='XAUUSD' else __import__('rlm2').trend_pos(m)
         for f in s.files:
             ag=rl_gpu.Agent(T.dim,int(s.width),int(s.depth),s.space);ag.load_state_dict(torch.load(f.replace('.json','_policy.pt'),map_location='cpu'))
-            x=rl_gpu.evaluate(ag,T,TEST[m],cost);x=x[x.index>=TEST[m][0]];r=rlm1.metrics(x,D,tp)
-            out.append({'market':m,'point':s.point,'seed':json.load(open(f))['seed'],**{k:v for k,v in r.items() if k!='by_year_return_pct'},**{f'ret_{y}':v for y,v in r['by_year_return_pct'].items()}})
+            for rep in range(5):                                     # stochastic test, 5 repeats (addendum 6)
+                x=rl_gpu.evaluate(ag,T,TEST[m],cost,True,rep);x=x[x.index>=TEST[m][0]];r=rlm1.metrics(x,D,tp)
+                out.append({'market':m,'point':s.point,'seed':json.load(open(f))['seed'],'rep':rep,**{k:v for k,v in r.items() if k!='by_year_return_pct'},**{f'ret_{y}':v for y,v in r['by_year_return_pct'].items()}})
             print(out[-1],flush=True)
     return pd.DataFrame(out)
 
 if __name__=='__main__':
     a=argparse.ArgumentParser();a.add_argument('--test',action='store_true');a=a.parse_args();X=load()
-    key=['market','variant','space','depth','width','ent','wd']
-    P=X.groupby(key).agg(seeds=('seed','count'),params=('params','first'),**{c:(c,'mean') for c in X.columns if c.startswith(('val_','train_'))}).round(3).reset_index()
-    P['point']=P.apply(lambda r:f"{r.variant} {r.space} d{r.depth} w{r.width}",axis=1);P.to_csv(f'{R}/rlm2_points.csv',index=False)
-    S=P.loc[P.groupby('market').val_alpha_sharpe.idxmax()].copy()
+    key=['market','group','variant','space','depth','width','ent','wd']
+    P=X.groupby(key).agg(seeds=('seed','count'),params=('params','first'),**{c:(c,'mean') for c in X.columns if c.startswith(('val_','train_','argmax_','p_'))}).round(3).reset_index()
+    P['point']=P.apply(lambda r:f"{r.variant} {r.space} d{r.depth} w{r.width}"+(' lr5e-5' if r.group=='diag' else ''),axis=1);P.to_csv(f'{R}/rlm2_points.csv',index=False)
+    E=P[P.group.isin(['sweep','delta_se'])];S=E.loc[E.groupby('market').val_alpha_sharpe.idxmax()].copy()      # selection rule, addendum 6
     S['files']=S.apply(lambda r:list(X[(X[key]==r[key]).all(1)].file),axis=1);S.drop(columns='files').to_csv(f'{R}/rlm2_selected.csv',index=False)
-    pd.set_option('display.width',250);pd.set_option('display.max_columns',30);print(P.drop(columns=['ent','wd']).to_string(index=False));print('\nselected:\n',S[['market','point','val_alpha_sharpe','train_alpha_sharpe']].to_string(index=False))
-    import os;os.makedirs('docs/ml/img',exist_ok=True);plots(P)
+    pd.set_option('display.width',250);pd.set_option('display.max_columns',30);print(P[['market','group','space','depth','width','params','val_alpha_sharpe','train_alpha_sharpe','val_trades_per_day','val_time_in_market','argmax_val_alpha_sharpe']].to_string(index=False));print('\nselected:\n',S[['market','point','val_alpha_sharpe','train_alpha_sharpe']].to_string(index=False))
+    import os;os.makedirs('docs/ml/img',exist_ok=True);plots(P[P.group.isin(['sweep','delta_se'])])
     if a.test:test(S).to_csv(f'{R}/rlm2_test.csv',index=False)

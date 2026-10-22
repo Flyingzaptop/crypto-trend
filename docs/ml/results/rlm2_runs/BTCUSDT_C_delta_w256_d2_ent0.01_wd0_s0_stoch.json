@@ -1,0 +1,55 @@
+{
+ "run": "BTCUSDT_C_delta_w256_d2_ent0.01_wd0_s0",
+ "val": {
+  "sharpe": -16.93,
+  "alpha_sharpe": -17.064,
+  "trades_per_day": 24.72,
+  "time_in_market": 0.6460000000000001,
+  "corr_trend_sign": 0.1814,
+  "corr_trend_size": 0.1802,
+  "beta": 0.029599999999999998,
+  "cagr_pct": -99.74,
+  "max_dd_pct": 99.74
+ },
+ "val_reps_alpha": [
+  -15.4,
+  -17.1,
+  -18.36,
+  -17.33,
+  -17.13
+ ],
+ "val_probs": {
+  "flat": [
+   0.9735,
+   0.0088,
+   0.0082,
+   0.0095
+  ],
+  "in_pos": [
+   0.974,
+   0.0086,
+   0.0082,
+   0.0092
+  ],
+  "flat_share": 0.3475387129731982,
+  "in_pos_share": 0.6524612870268018
+ },
+ "train": {
+  "sharpe": -10.299999999999999,
+  "alpha_sharpe": -10.33,
+  "trades_per_day": 25.180000000000003,
+  "time_in_market": 0.6478,
+  "corr_trend_sign": 0.2222,
+  "corr_trend_size": 0.192,
+  "beta": 0.006399999999999999,
+  "cagr_pct": -99.75999999999999,
+  "max_dd_pct": 100.0
+ },
+ "train_reps_alpha": [
+  -10.51,
+  -10.64,
+  -11.02,
+  -9.77,
+  -9.71
+ ]
+}

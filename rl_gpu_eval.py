@@ -20,10 +20,11 @@ def one(path,dev):
     json.dump(out,open(path.replace('.json','_stoch.json'),'w'),indent=1,default=float);return out
 
 if __name__=='__main__':
-    a=argparse.ArgumentParser();a.add_argument('--workers',type=int,default=8);a.add_argument('--worker',type=int,default=None);a=a.parse_args()
-    F=sorted(p for p in glob.glob(f'{rl_gpu.RUNS}/*.json') if not p.endswith('_stoch.json'))
+    a=argparse.ArgumentParser();a.add_argument('--workers',type=int,default=8);a.add_argument('--worker',type=int,default=None);a.add_argument('--pattern',default='*')
+    a=a.parse_args()
+    F=sorted(p for p in glob.glob(f'{rl_gpu.RUNS}/{a.pattern}.json') if not p.endswith('_stoch.json'))
     if a.worker is None:
-        ps=[subprocess.Popen([sys.executable,'-W','ignore',__file__,'--workers',str(a.workers),'--worker',str(i)],stdout=open(f'eval_w{i}.log','w'),stderr=subprocess.STDOUT) for i in range(a.workers)]
+        ps=[subprocess.Popen([sys.executable,'-W','ignore',__file__,'--workers',str(a.workers),'--worker',str(i),'--pattern',a.pattern],stdout=open(f'/tmp/eval_w{i}.log' if not torch.cuda.is_available() else f'eval_w{i}.log','w'),stderr=subprocess.STDOUT) for i in range(a.workers)]
         [p.wait() for p in ps];print('eval done')
     else:
         dev=torch.device('cuda' if torch.cuda.is_available() else 'cpu')

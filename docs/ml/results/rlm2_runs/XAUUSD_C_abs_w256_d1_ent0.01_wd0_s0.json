@@ -1,0 +1,93 @@
+{
+ "market": "XAUUSD",
+ "variant": "C",
+ "space": "abs",
+ "eval": "argmax",
+ "width": 256,
+ "depth": 1,
+ "ent": 0.01,
+ "wd": 0.0,
+ "seed": 0,
+ "params": 137220,
+ "cfg": {
+  "steps": 26214400,
+  "n_env": 1024,
+  "T": 256,
+  "epochs": 10,
+  "minibatch": 16384,
+  "lr": 0.0002,
+  "clip": 0.2,
+  "vf_coef": 0.5,
+  "max_grad": 0.5
+ },
+ "sec": 311,
+ "val_curve": [
+  {
+   "steps": 6553600,
+   "sharpe": -21.12,
+   "alpha_sharpe": -21.1,
+   "trades_per_day": 85.7,
+   "time_in_market": 0.065,
+   "corr_trend_sign": 0.398
+  },
+  {
+   "steps": 13107200,
+   "sharpe": -10.62,
+   "alpha_sharpe": -10.7,
+   "trades_per_day": 20.8,
+   "time_in_market": 0.017,
+   "corr_trend_sign": 0.305
+  },
+  {
+   "steps": 19660800,
+   "sharpe": -8.06,
+   "alpha_sharpe": -8.03,
+   "trades_per_day": 8.0,
+   "time_in_market": 0.008,
+   "corr_trend_sign": 0.318
+  },
+  {
+   "steps": 26214400,
+   "sharpe": -5.17,
+   "alpha_sharpe": -5.11,
+   "trades_per_day": 0.8,
+   "time_in_market": 0.0,
+   "corr_trend_sign": 0.174
+  }
+ ],
+ "val": {
+  "sharpe": -5.17,
+  "alpha_sharpe": -5.11,
+  "beta": -0.005,
+  "cagr_pct": -3.7,
+  "max_dd_pct": 3.7,
+  "trades_per_day": 0.8,
+  "time_in_market": 0.0,
+  "median_hold_min": 1.0,
+  "corr_trend_sign": 0.174,
+  "corr_trend_size": 0.183,
+  "by_year_return_pct": {
+   "2023": -3.7
+  }
+ },
+ "train": {
+  "sharpe": -3.56,
+  "alpha_sharpe": -3.53,
+  "beta": -0.003,
+  "cagr_pct": -2.1,
+  "max_dd_pct": 12.1,
+  "trades_per_day": 0.5,
+  "time_in_market": 0.0,
+  "median_hold_min": 1.0,
+  "corr_trend_sign": 0.192,
+  "corr_trend_size": 0.199,
+  "by_year_return_pct": {
+   "2017": -1.7,
+   "2018": -1.8,
+   "2019": -1.9,
+   "2020": -1.1,
+   "2021": -2.2,
+   "2022": -3.9
+  }
+ }
+}
