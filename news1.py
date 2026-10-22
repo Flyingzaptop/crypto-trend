@@ -7,11 +7,11 @@ R='docs/ml/results';OUT=f'{data_m1.ROOT}/news';GOLD=f'{data_m1.ROOT}/ml/gold/xau
 H={'15m':15,'1h':60,'4h':240,'1d':1440};LAG=pd.Timedelta(minutes=15);TRAIN_END='2022-12-31 23:59';VAL=('2023-01-01','2023-12-31 23:59');TEST0='2024-01-01'
 EVF=['n','conf_n','conf_m','conf_g','conf_gmin','tone','neg']+[f'conf_{r}_{k}' for r in ('me','ru','cn','us') for k in ('n','m','g')]
 
-def features():
+def features(gkg=True):
     """One row per Events packet; availability a = T + 15 min. GKG (hourly slices) joined as of its own availability (as-of, backward)."""
     E=pd.concat([pd.read_parquet(p) for p in sorted(glob.glob(f'{OUT}/events_*.parquet'))]).drop_duplicates('t').sort_values('t').set_index('t')
     E=E[EVF].add_prefix('ev_');E.index=E.index+LAG
-    G=sorted(glob.glob(f'{OUT}/gkg_*.parquet'))
+    G=sorted(glob.glob(f'{OUT}/gkg_*.parquet')) if gkg else []
     if G:
         K=pd.concat([pd.read_parquet(p) for p in G]).drop_duplicates('t').sort_values('t').set_index('t');K=K.drop(columns=[c for c in K if c=='t'],errors='ignore').add_prefix('gk_');K.index=K.index+LAG
         E=pd.merge_asof(E.reset_index().rename(columns={'index':'a','t':'a'}),K.reset_index().rename(columns={'t':'a'}),on='a',direction='backward',tolerance=pd.Timedelta('2h')).set_index('a')
@@ -111,25 +111,26 @@ def models(Z,T,c,tag='real',only=None):
     return pd.DataFrame(rows)
 
 if __name__=='__main__':
-    a=argparse.ArgumentParser();a.add_argument('--part',default='all');a=a.parse_args()
-    F=features();Z=zscore(F);c=gold();Z=Z[(Z.index>=c.index[0])&(Z.index<=c.index[-1])];T=targets(Z.index,c);rng=np.random.default_rng(0)
+    a=argparse.ArgumentParser();a.add_argument('--part',default='all');a.add_argument('--no-gkg',action='store_true');a.add_argument('--tag',default='')
+    a=a.parse_args()
+    F=features(not a.no_gkg);Z=zscore(F);c=gold();Z=Z[(Z.index>=c.index[0])&(Z.index<=c.index[-1])];T=targets(Z.index,c);rng=np.random.default_rng(0)
     print('packets',len(Z),Z.index[0],Z.index[-1],'| with entry',int((T.entry_i>=0).sum()),'| gkg cols',sum(c_.startswith('z_gk_') for c_ in Z),flush=True)
     SH={'+7d':'7D','-7d':'-7D','+30d':'30D','-30d':'-30D'}
     def shifted(s):Zs=Z.copy();Zs.index=Zs.index+pd.Timedelta(s);return Zs.reindex(Z.index,method='nearest',tolerance=pd.Timedelta('20min'))
     if a.part in ('corr','all'):
-        C=corr_by_year(Z,T);C.to_csv(f'{R}/news1_corr.csv',index=False)
-        P=pd.concat([corr_by_year(shifted(s),T,k) for k,s in SH.items()]);P.to_csv(f'{R}/news1_corr_placebo.csv',index=False)
+        C=corr_by_year(Z,T);C.to_csv(f'{R}/news1_corr{a.tag}.csv',index=False)
+        P=pd.concat([corr_by_year(shifted(s),T,k) for k,s in SH.items()]);P.to_csv(f'{R}/news1_corr_placebo{a.tag}.csv',index=False)
         for k,g in pd.concat([C,P]).groupby('shift'):print(k,'median |mean rho|',round(g['mean'].abs().median(),4),'max |mean rho|',round(g['mean'].abs().max(),4),'pairs >=8/11 same sign',int((g.same_sign_years>=8).sum()),'of',len(g),flush=True)
     if a.part in ('events','all'):
         feats=[('z_ev_conf_n',1),('z_ev_conf_me_n',1),('z_ev_conf_ru_n',1),('z_ev_tone',-1)]+[(f,s) for f,s in (('z_gk_conflict_share',1),('z_gk_tone',-1)) if f in Z]
-        E,curves=event_study(Z,c,feats,rng);E.to_csv(f'{R}/news1_events.csv',index=False);print(E.to_string(index=False),flush=True)
+        E,curves=event_study(Z,c,feats,rng);E.to_csv(f'{R}/news1_events{a.tag}.csv',index=False);print(E.to_string(index=False),flush=True)
         import matplotlib;matplotlib.use('Agg');import matplotlib.pyplot as plt
         fig,ax=plt.subplots(len(feats),2,figsize=(10,2.6*len(feats)),squeeze=False)
         for i,(f,_) in enumerate(feats):
             for j,per in enumerate(('2015-22','2023-26')):
                 o,m,lo,hi=curves[(f,per)];x=o/60;ax[i,j].plot(x,m*1e4);ax[i,j].fill_between(x,lo*1e4,hi*1e4,alpha=0.3);ax[i,j].axhline(0,color='k',lw=0.5);ax[i,j].axvline(0,color='k',lw=0.5)
                 ax[i,j].set_title(f'{f} top 1%: {per} (gold, excess vs same-hour control)',fontsize=8);ax[i,j].set_ylabel('bp');ax[i,j].set_xlabel('hours')
-        fig.tight_layout();fig.savefig('docs/ml/img/news1_event_study.png',dpi=100)
+        fig.tight_layout();fig.savefig(f'docs/ml/img/news1_event_study{a.tag}.png',dpi=100)
     if a.part in ('model','all'):
         M=models(Z,T,c);V=M[M.period=='val'].sort_values('sharpe',ascending=False);best=(V.iloc[0].model,V.iloc[0].h)
         print('selected',best,flush=True);Pm=pd.concat([models(shifted(s),T,c,k,only=best) for k,s in SH.items()])
