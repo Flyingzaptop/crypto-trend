@@ -7,3 +7,4 @@ data/
 !docs/vol/results/*.csv
 !docs/ml/results/*.csv
 docs/ml/results/rl1_runs/
+docs/ml/results/rlm1_runs/*.parquet
