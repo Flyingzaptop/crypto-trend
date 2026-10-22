@@ -26,7 +26,8 @@ def unzip(b):z=zipfile.ZipFile(io.BytesIO(b));return z.read(z.namelist()[0])
 def events(url):
     b=get(url);t=pd.Timestamp(url.rsplit('/',1)[1][:14]);r={'t':t}
     if b is None:return r
-    d=pd.read_csv(io.BytesIO(unzip(b)),sep='\t',header=None,usecols=[29,30,31,34,53],dtype={29:'float',30:'float',31:'float',34:'float',53:'str'},on_bad_lines='skip')
+    try:d=pd.read_csv(io.BytesIO(unzip(b)),sep='\t',header=None,usecols=[29,30,31,34,53],dtype={29:'float',30:'float',31:'float',34:'float',53:'str'},on_bad_lines='skip')
+    except Exception:return r                                 # empty or broken packet
     d.columns=['q','g','m','tone','cc'];d=d.dropna(subset=['q']);r['n']=len(d)
     if not len(d):return r
     c=d[d.q>=3];r.update(conf_n=len(c),conf_m=c.m.sum(),conf_g=c.g.mean(),conf_gmin=c.g.min(),
@@ -39,7 +40,9 @@ def gkg(url):
     b=get(url);t=pd.Timestamp(url.rsplit('/',1)[1][:14]);r={'t':t}
     if b is None:return r
     th,tn=[],[]
-    for l in unzip(b).decode('utf-8','ignore').split('\n'):
+    try:raw=unzip(b)
+    except Exception:return r
+    for l in raw.decode('utf-8','ignore').split('\n'):
         p=l.split('\t')
         if len(p)<16:continue
         try:tone=float(p[15].split(',',1)[0])
