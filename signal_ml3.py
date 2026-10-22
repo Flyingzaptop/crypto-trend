@@ -1,16 +1,36 @@
 """Weekly forward signal for ML3 (cross-sectional L/S on the top-50 Binance perps) plus the BTC+ETH trend.
 Run once a week on MONDAY after 00:00 UTC: the decision uses the just-closed Sunday daily bar, positions are held Mon..Sun,
 exactly as in the backtest (ml3.py / ml3_robust.py).
-usage: python signal_ml3.py [--equity 10000] [--k 5] [--n 50] [--log forward_ml3.csv]
+usage: python signal_ml3.py [--equity 10000] [--k 5] [--n 30] [--n2 50] [--log forward_ml3.csv]
+Forward version: top-30 (top-50 logged for comparison), regularised LightGBM (REG), shorts ~ 1/vol4, each short <= 0.15.
 
 Data: data/ml/panel_*.parquet (build with `python panel.py`, monthly archives) extended to the last Sunday with
 spot REST klines (data-api.binance.vision) and funding from fapi.binance.com; where fapi is blocked, daily funding is
 estimated from the perp premium index (data.binance.vision daily premiumIndexKlines): 3 x (p + clamp(0.01% - p, +-0.05%)).
-Model: LightGBM with the fixed ML3 parameters, retrained on every week whose target is already known."""
+Model: LightGBM with the REG parameters below, retrained on every week whose target is already known."""
 import os,io,json,zipfile,argparse,urllib.error,numpy as np,pandas as pd,lightgbm as lgb
 from concurrent.futures import ThreadPoolExecutor
 import trend,panel,ml3,ml_data as md,archive_d1
-from ml1 import PARAMS
+
+REG=dict(n_estimators=200,max_depth=3,num_leaves=7,learning_rate=0.05,min_child_samples=200,subsample=0.7,subsample_freq=1,
+         colsample_bytree=0.7,reg_lambda=5.0,verbose=-1,random_state=7)        # forward version (coordinator's replica settings)
+SHORT_CAP=0.15
+
+def book_fwd(score,U,vol,k=5,cap=SHORT_CAP):
+    """Forward-version weights per decision row: long top-k at +0.5/k each; short bottom-k with weights ~ 1/vol, summing to -0.5,
+    no single short above `cap` (excess re-spread over the uncapped shorts)."""
+    W=pd.DataFrame(0.,index=score.index,columns=score.columns)
+    for d in score.index:
+        s=score.loc[d].where(U.loc[d]).dropna()
+        if len(s)<2*k:continue
+        s=s.sort_values();W.loc[d,s.index[-k:]]=0.5/k
+        iv=1/vol.loc[d,s.index[:k]].clip(lower=1e-4);w=0.5*iv/iv.sum()
+        for _ in range(k):
+            over=w>cap
+            if not over.any():break
+            ex=(w[over]-cap).sum();w[over]=cap;w[~over]+=ex*w[~over]/w[~over].sum()
+        W.loc[d,w.index]=-w
+    return W
 
 API='https://data-api.binance.vision/api/v3/klines';FAPI='https://fapi.binance.com/fapi/v1'
 
@@ -64,23 +84,26 @@ def extend(C,Q,F,end):
 
 def ml3_weights(C,Q,F,n,k):
     rows,U,R=ml3.weekly(C,Q,F,n);FEAT=[c for c in rows.columns if c!='y'];rows=rows[rows.index.get_level_values(0)>='2020-01-01']
-    last=U.index[-1];tr=rows.y.notna();m=lgb.LGBMRegressor(**PARAMS).fit(rows.loc[tr,FEAT],rows.loc[tr,'y'])
+    last=U.index[-1];tr=rows.y.notna();m=lgb.LGBMRegressor(**REG).fit(rows.loc[tr,FEAT],rows.loc[tr,'y'])
     te=rows.index.get_level_values(0)==last;p=pd.Series(m.predict(rows.loc[te,FEAT]),index=rows.index[te].get_level_values(1))
-    W=ml3.book(p.to_frame().T.set_axis([last]),U.loc[[last]],k=k).iloc[0];return last,W[W!=0].sort_values(),p,int(tr.sum())
+    vol=rows.loc[te,'vol4'].droplevel(0).to_frame().T.set_axis([last])
+    W=book_fwd(p.to_frame().T.set_axis([last]),U.loc[[last]],vol,k=k).iloc[0];return last,W[W!=0].sort_values(),p,int(tr.sum())
 
 if __name__=='__main__':
-    a=argparse.ArgumentParser();a.add_argument('--equity',type=float,default=None);a.add_argument('--k',type=int,default=5);a.add_argument('--n',type=int,default=50)
+    a=argparse.ArgumentParser();a.add_argument('--equity',type=float,default=None);a.add_argument('--k',type=int,default=5);a.add_argument('--n',type=int,default=30);a.add_argument('--n2',type=int,default=50)
     a.add_argument('--log',default=None);a=a.parse_args()
     today=pd.Timestamp.now(tz='UTC').tz_localize(None).floor('D');sunday=today-pd.Timedelta(days=(today.dayofweek+1)%7 or 7)   # last fully closed Sunday bar
     C,Q,F=panel.load();C,Q,F=extend(C,Q,F,sunday);C,Q,F=C.loc[:sunday],Q.loc[:sunday],F.loc[:sunday]
-    last,W,p,ntr=ml3_weights(C,Q,F,a.n,a.k)
+    last,W,p,ntr=ml3_weights(C,Q,F,a.n,a.k);_,W2,p2,_=ml3_weights(C,Q,F,a.n2,a.k)
     print(f'\nML3 L/S: decision at the close of Sunday {last.date()} (UTC), hold Mon..Sun. Universe top-{a.n}, {a.k} per leg, model trained on {ntr} coin-weeks.')
     for s,w in W.items():print(f'  {s:<14} {w:+.3f} x equity'+(f' = {w*a.equity:+,.0f} USD' if a.equity else '')+f'   pred {p[s]:+.4f}   close {C[s].iloc[-1]:.6g}')
     print(f'  gross {W.abs().sum():.2f}, net {W.sum():+.2f}')
+    print(f'\nComparison book (journal only, not traded): top-{a.n2}:',', '.join(f'{s} {w:+.3f}' for s,w in W2.items()))
     P=pd.DataFrame({s:trend.daily_closes(s,start=str((today-pd.Timedelta(days=500)).date())) for s in trend.COINS}).dropna().loc[:sunday]
     N=trend.target_positions(P).iloc[-1];print(f'\nTrend BTC+ETH (20% vol, cap 1x) from the same close:',', '.join(f'{s} {N[s]:+.3f}' for s in trend.COINS))
     if a.log:
-        rows=[{'decision_date':last.date(),'book':'ml3','symbol':s,'weight':round(float(w),4),'pred':round(float(p[s]),5),'close':float(C[s].iloc[-1])} for s,w in W.items()]
+        rows=[{'decision_date':last.date(),'book':f'ml3_top{a.n}','symbol':s,'weight':round(float(w),4),'pred':round(float(p[s]),5),'close':float(C[s].iloc[-1])} for s,w in W.items()]
+        rows+=[{'decision_date':last.date(),'book':f'ml3_top{a.n2}','symbol':s,'weight':round(float(w),4),'pred':round(float(p2[s]),5),'close':float(C[s].iloc[-1])} for s,w in W2.items()]
         rows+=[{'decision_date':last.date(),'book':'trend','symbol':s,'weight':round(float(N[s]),4),'pred':np.nan,'close':float(P[s].iloc[-1])} for s in trend.COINS]
         J=pd.DataFrame(rows)
         if os.path.exists(a.log):
