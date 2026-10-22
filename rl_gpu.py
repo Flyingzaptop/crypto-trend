@@ -63,15 +63,21 @@ class Agent(torch.nn.Module):
             with torch.no_grad():s.pi[-1].bias[0]=float(np.log(0.97/0.01))
     def nparams(s):return sum(p.numel() for p in s.parameters())
 
-def evaluate(ag,T,period,cost,stoch=False,seed=0):
+def evaluate(ag,T,period,cost,stoch=False,seed=0,probs=None):
     """As rlm1.evaluate: weekly chunks in one batch, each starts flat and is closed with cost at its end.
-    stoch=True samples actions from the policy (fixed seed) instead of argmax - needed for 'delta', where argmax is almost always "hold"."""
+    stoch=True samples actions from the policy (fixed seed) instead of argmax - needed for 'delta', where argmax is almost always "hold".
+    probs: optional dict, filled with mean action probabilities when flat and when in a position."""
     g=torch.Generator(device=T.dev).manual_seed(seed)
     D=T.D;i0,i1=D.span(period);i0=max(i0,D.first);st=np.arange(i0,i1-1,EP);L=torch.as_tensor(np.minimum(EP,i1-1-st),device=T.dev)
     B=TBook(T,len(st));B.start(st);P=torch.zeros(len(st),EP,dtype=torch.float64,device=T.dev);POS=torch.zeros_like(P)
     with torch.no_grad():
         for k in range(int(L.max())):
-            live=k<L;lg=ag.pi(B.obs());a=torch.multinomial(torch.softmax(lg.float(),1),1,generator=g)[:,0] if stoch else lg.argmax(1);a=to_abs(a,B.pos,ag.space);a=torch.where(live,a,(1+B.pos).long());r,_=B.act(a,cost,False)
+            live=k<L;lg=ag.pi(B.obs())
+            if probs is not None:
+                p=torch.softmax(lg.double(),1)
+                for nm,msk in (('flat',live&(B.pos==0)),('in_pos',live&(B.pos!=0))):
+                    probs[nm+'_sum']=probs.get(nm+'_sum',0)+p[msk].sum(0);probs[nm+'_n']=probs.get(nm+'_n',0)+int(msk.sum())
+            a=torch.multinomial(torch.softmax(lg.float(),1),1,generator=g)[:,0] if stoch else lg.argmax(1);a=to_abs(a,B.pos,ag.space);a=torch.where(live,a,(1+B.pos).long());r,_=B.act(a,cost,False)
             P[:,k]=torch.where(live,r,torch.zeros_like(r));POS[:,k]=torch.where(live,B.pos,torch.zeros_like(r));B.t=B.t.clamp(max=T.n-2)
     j=torch.arange(len(st),device=T.dev);P[j,L-1]-=POS[j,L-1].abs()*cost
     P,POS,L=P.cpu().numpy(),POS.cpu().numpy(),L.cpu().numpy()
@@ -143,12 +149,12 @@ def check(dev):
 
 if __name__=='__main__':
     a=argparse.ArgumentParser();a.add_argument('cmd');a.add_argument('args',nargs='*');a.add_argument('--device',default='cuda' if torch.cuda.is_available() else 'cpu')
-    a.add_argument('--steps',type=int,default=None);a.add_argument('--stoch_eval',action='store_true');a.add_argument('--n_env',type=int,default=None);a=a.parse_args();dev=torch.device(a.device)
-    cfg=dict(CFG,**{k:v for k,v in (('steps',a.steps),('n_env',a.n_env)) if v})
+    a.add_argument('--steps',type=int,default=None);a.add_argument('--stoch_eval',action='store_true');a.add_argument('--lr',type=float,default=None);a.add_argument('--n_env',type=int,default=None);a=a.parse_args();dev=torch.device(a.device)
+    cfg=dict(CFG,**{k:v for k,v in (('steps',a.steps),('n_env',a.n_env),('lr',a.lr)) if v})
     if a.cmd=='check':r=check(dev);print(json.dumps(r,indent=1));json.dump(r,open('docs/ml/results/rl_gpu_equivalence.json','w'),indent=1)
     elif a.cmd in ('bench','run'):
         m,v,w,d,ent,wd,seed,sp=(a.args+['BTCUSDT','A','32','2','0.01','0','0','abs'][len(a.args):])
-        w,d,ent,wd,seed=int(w),int(d),float(ent),float(wd),int(seed);tg=f'{m}_{v}_{sp}_w{w}_d{d}_ent{ent:g}_wd{wd:g}_s{seed}'+('_se' if a.stoch_eval else '')
+        w,d,ent,wd,seed=int(w),int(d),float(ent),float(wd),int(seed);tg=f'{m}_{v}_{sp}_w{w}_d{d}_ent{ent:g}_wd{wd:g}_s{seed}'+('_se' if a.stoch_eval else '')+(f'_lr{a.lr:g}' if a.lr else '')
         if a.cmd=='bench':cfg['steps']=a.steps or cfg['n_env']*cfg['T']*8
         ag,T,D,cost,tp,vals,vb,sec=train(m,v,w,d,ent,wd,seed,dev,cfg,log=tg,space=sp,stoch_eval=a.stoch_eval)
         sps=cfg['steps']/sec;print(f'{tg}: {cfg["steps"]} steps in {sec:.0f}s = {sps:,.0f} steps/s -> {6e6/sps/60:.1f} min per 6M (incl. 4 val evals)')
