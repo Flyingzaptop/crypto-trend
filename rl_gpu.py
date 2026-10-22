@@ -63,20 +63,22 @@ class Agent(torch.nn.Module):
             with torch.no_grad():s.pi[-1].bias[0]=float(np.log(0.97/0.01))
     def nparams(s):return sum(p.numel() for p in s.parameters())
 
-def evaluate(ag,T,period,cost):
-    """As rlm1.evaluate: weekly chunks in one batch, each starts flat and is closed with cost at its end."""
+def evaluate(ag,T,period,cost,stoch=False,seed=0):
+    """As rlm1.evaluate: weekly chunks in one batch, each starts flat and is closed with cost at its end.
+    stoch=True samples actions from the policy (fixed seed) instead of argmax - needed for 'delta', where argmax is almost always "hold"."""
+    g=torch.Generator(device=T.dev).manual_seed(seed)
     D=T.D;i0,i1=D.span(period);i0=max(i0,D.first);st=np.arange(i0,i1-1,EP);L=torch.as_tensor(np.minimum(EP,i1-1-st),device=T.dev)
     B=TBook(T,len(st));B.start(st);P=torch.zeros(len(st),EP,dtype=torch.float64,device=T.dev);POS=torch.zeros_like(P)
     with torch.no_grad():
         for k in range(int(L.max())):
-            live=k<L;a=to_abs(ag.pi(B.obs()).argmax(1),B.pos,ag.space);a=torch.where(live,a,(1+B.pos).long());r,_=B.act(a,cost,False)
+            live=k<L;lg=ag.pi(B.obs());a=torch.multinomial(torch.softmax(lg.float(),1),1,generator=g)[:,0] if stoch else lg.argmax(1);a=to_abs(a,B.pos,ag.space);a=torch.where(live,a,(1+B.pos).long());r,_=B.act(a,cost,False)
             P[:,k]=torch.where(live,r,torch.zeros_like(r));POS[:,k]=torch.where(live,B.pos,torch.zeros_like(r));B.t=B.t.clamp(max=T.n-2)
     j=torch.arange(len(st),device=T.dev);P[j,L-1]-=POS[j,L-1].abs()*cost
     P,POS,L=P.cpu().numpy(),POS.cpu().numpy(),L.cpu().numpy()
     ts=np.concatenate([D.t[s+1:s+1+l] for s,l in zip(st,L)]);pnl=np.concatenate([P[j,:l] for j,l in enumerate(L)]);pos=np.concatenate([POS[j,:l] for j,l in enumerate(L)])
     return pd.DataFrame({'pnl':pnl,'pos':pos},index=ts)
 
-def train(market,variant,w,depth,ent,wd,seed,dev,cfg=CFG,on_quarter=None,log=None,space='abs'):
+def train(market,variant,w,depth,ent,wd,seed,dev,cfg=CFG,on_quarter=None,log=None,space='abs',stoch_eval=False):
     """PPO on device. Returns the agent with the best checkpoint by validation alpha-Sharpe and the per-quarter validation metrics."""
     torch.manual_seed(seed);rng=torch.Generator(device=dev).manual_seed(seed);V=rlm1.VARS[variant];gamma,lam=V['gamma'],V['gae']
     D=rlm1.Data(market,V['daily'],MKT[market]['train']);T=TData(D,dev);cost=MKT[market]['cost']*1e-4;pen_on=V['pen']
@@ -111,7 +113,7 @@ def train(market,variant,w,depth,ent,wd,seed,dev,cfg=CFG,on_quarter=None,log=Non
                 pl=torch.max(-A*ratio,-A*ratio.clamp(1-cfg['clip'],1+cfg['clip'])).mean();vl=((ag.v(bo[mb])[:,0]-bret[mb])**2).mean()
                 loss=pl+cfg['vf_coef']*vl-ent*dist.entropy().mean();opt.zero_grad();loss.backward();torch.nn.utils.clip_grad_norm_(ag.parameters(),cfg['max_grad']);opt.step()
         if it in quarters:
-            x=rlm1.metrics(evaluate(ag,T,VAL,cost),D,tp);vals.append({'steps':it*N*Tn,**{q:x[q] for q in ('sharpe','alpha_sharpe','trades_per_day','time_in_market','corr_trend_sign')}})
+            x=rlm1.metrics(evaluate(ag,T,VAL,cost,stoch_eval,seed),D,tp);vals.append({'steps':it*N*Tn,**{q:x[q] for q in ('sharpe','alpha_sharpe','trades_per_day','time_in_market','corr_trend_sign')}})
             if log:print(f'{log} it {it}/{iters} {time.time()-t0:.0f}s val {vals[-1]}',flush=True)
             if x['alpha_sharpe']>best:best=x['alpha_sharpe'];bs={kk:vv.detach().clone() for kk,vv in ag.state_dict().items()};vb=x
     ag.load_state_dict(bs);return ag,T,D,cost,tp,vals,vb,time.time()-t0
@@ -141,16 +143,16 @@ def check(dev):
 
 if __name__=='__main__':
     a=argparse.ArgumentParser();a.add_argument('cmd');a.add_argument('args',nargs='*');a.add_argument('--device',default='cuda' if torch.cuda.is_available() else 'cpu')
-    a.add_argument('--steps',type=int,default=None);a.add_argument('--n_env',type=int,default=None);a=a.parse_args();dev=torch.device(a.device)
+    a.add_argument('--steps',type=int,default=None);a.add_argument('--stoch_eval',action='store_true');a.add_argument('--n_env',type=int,default=None);a=a.parse_args();dev=torch.device(a.device)
     cfg=dict(CFG,**{k:v for k,v in (('steps',a.steps),('n_env',a.n_env)) if v})
     if a.cmd=='check':r=check(dev);print(json.dumps(r,indent=1));json.dump(r,open('docs/ml/results/rl_gpu_equivalence.json','w'),indent=1)
     elif a.cmd in ('bench','run'):
         m,v,w,d,ent,wd,seed,sp=(a.args+['BTCUSDT','A','32','2','0.01','0','0','abs'][len(a.args):])
-        w,d,ent,wd,seed=int(w),int(d),float(ent),float(wd),int(seed);tg=f'{m}_{v}_{sp}_w{w}_d{d}_ent{ent:g}_wd{wd:g}_s{seed}'
+        w,d,ent,wd,seed=int(w),int(d),float(ent),float(wd),int(seed);tg=f'{m}_{v}_{sp}_w{w}_d{d}_ent{ent:g}_wd{wd:g}_s{seed}'+('_se' if a.stoch_eval else '')
         if a.cmd=='bench':cfg['steps']=a.steps or cfg['n_env']*cfg['T']*8
-        ag,T,D,cost,tp,vals,vb,sec=train(m,v,w,d,ent,wd,seed,dev,cfg,log=tg,space=sp)
+        ag,T,D,cost,tp,vals,vb,sec=train(m,v,w,d,ent,wd,seed,dev,cfg,log=tg,space=sp,stoch_eval=a.stoch_eval)
         sps=cfg['steps']/sec;print(f'{tg}: {cfg["steps"]} steps in {sec:.0f}s = {sps:,.0f} steps/s -> {6e6/sps/60:.1f} min per 6M (incl. 4 val evals)')
         if a.cmd=='run':
-            tr=rlm1.metrics(evaluate(ag,T,MKT[m]['train'],cost),D,tp);os.makedirs(RUNS,exist_ok=True);torch.save(ag.state_dict(),f'{RUNS}/{tg}_policy.pt')
-            json.dump({'market':m,'variant':v,'space':sp,'width':w,'depth':d,'ent':ent,'wd':wd,'seed':seed,'params':ag.nparams(),'cfg':cfg,'sec':round(sec),
+            tr=rlm1.metrics(evaluate(ag,T,MKT[m]['train'],cost,a.stoch_eval,seed),D,tp);os.makedirs(RUNS,exist_ok=True);torch.save(ag.state_dict(),f'{RUNS}/{tg}_policy.pt')
+            json.dump({'market':m,'variant':v,'space':sp,'eval':'stochastic' if a.stoch_eval else 'argmax','width':w,'depth':d,'ent':ent,'wd':wd,'seed':seed,'params':ag.nparams(),'cfg':cfg,'sec':round(sec),
                        'val_curve':vals,'val':vb,'train':tr},open(f'{RUNS}/{tg}.json','w'),indent=1,default=float)
