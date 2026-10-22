@@ -1,0 +1,91 @@
+{
+ "market": "BTCUSDT",
+ "variant": "C",
+ "space": "delta",
+ "eval": "stochastic",
+ "width": 64,
+ "depth": 4,
+ "ent": 0.01,
+ "wd": 0.0,
+ "seed": 0,
+ "params": 59333,
+ "cfg": {
+  "steps": 26214400,
+  "n_env": 1024,
+  "T": 256,
+  "epochs": 10,
+  "minibatch": 16384,
+  "lr": 0.0002,
+  "clip": 0.2,
+  "vf_coef": 0.5,
+  "max_grad": 0.5
+ },
+ "sec": 376,
+ "val_curve": [
+  {
+   "steps": 6553600,
+   "sharpe": -14.95,
+   "alpha_sharpe": -14.89,
+   "trades_per_day": 23.9,
+   "time_in_market": 0.648,
+   "corr_trend_sign": 0.001
+  },
+  {
+   "steps": 13107200,
+   "sharpe": -13.11,
+   "alpha_sharpe": -13.08,
+   "trades_per_day": 21.2,
+   "time_in_market": 0.626,
+   "corr_trend_sign": 0.031
+  },
+  {
+   "steps": 19660800,
+   "sharpe": -11.83,
+   "alpha_sharpe": -11.71,
+   "trades_per_day": 18.1,
+   "time_in_market": 0.597,
+   "corr_trend_sign": 0.084
+  },
+  {
+   "steps": 26214400,
+   "sharpe": -10.71,
+   "alpha_sharpe": -10.6,
+   "trades_per_day": 16.0,
+   "time_in_market": 0.586,
+   "corr_trend_sign": 0.124
+  }
+ ],
+ "val": {
+  "sharpe": -10.71,
+  "alpha_sharpe": -10.6,
+  "beta": -0.048,
+  "cagr_pct": -97.6,
+  "max_dd_pct": 97.6,
+  "trades_per_day": 16.0,
+  "time_in_market": 0.586,
+  "median_hold_min": 60.0,
+  "corr_trend_sign": 0.124,
+  "corr_trend_size": 0.114,
+  "by_year_return_pct": {
+   "2023": -97.6
+  }
+ },
+ "train": {
+  "sharpe": -6.97,
+  "alpha_sharpe": -6.95,
+  "beta": -0.05,
+  "cagr_pct": -97.4,
+  "max_dd_pct": 100.0,
+  "trades_per_day": 16.3,
+  "time_in_market": 0.582,
+  "median_hold_min": 58.0,
+  "corr_trend_sign": 0.204,
+  "corr_trend_size": 0.132,
+  "by_year_return_pct": {
+   "2019": -97.9,
+   "2020": -96.3,
+   "2021": -96.8,
+   "2022": -98.2
+  }
+ }
+}
