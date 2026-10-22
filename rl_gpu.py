@@ -130,6 +130,13 @@ def check(dev):
             err['rew']=max(err['rew'],float(np.abs(r1-r2.cpu().numpy()).max()));err['pen']=max(err['pen'],float(np.abs(np.asarray(p1)-p2.cpu().numpy()).max()))
             for q in ('pos','held','entry'):err[q]=max(err[q],float(np.abs(getattr(nb,q)-getattr(tb,q).cpu().numpy()).max()))
         out[m]={q:float(f'{v:.2e}') for q,v in err.items()};out[m]['pass']=all(v<1e-5 for v in err.values())
+        # 'delta' zero strategy: always "hold" from flat == always flat (abs action 1) in the numpy Book
+        nb=rlm1.Book(D,n);nb.start(t0);tb=TBook(T,n);tb.start(t0);e=0.
+        for k in range(10000):
+            e=max(e,float(np.abs(nb.obs()-tb.obs().cpu().numpy()).max()));r1,p1=nb.act(np.ones(n,dtype=int),5e-4,True)
+            r2,p2=tb.act(to_abs(torch.zeros(n,dtype=torch.long,device=dev),tb.pos,'delta'),5e-4,True)
+            e=max(e,float(np.abs(r1-r2.cpu().numpy()).max()),float(np.abs(np.asarray(p1)-p2.cpu().numpy()).max()),float(np.abs(nb.pos-tb.pos.cpu().numpy()).max()))
+        out[m]['delta_always_hold_max_err']=float(f'{e:.2e}');out[m]['pass']=out[m]['pass'] and e<1e-5
     return out
 
 if __name__=='__main__':
