@@ -128,7 +128,7 @@ def post_job(job):
     return {'what':what,'m':m,'b':b,'seed':seed,'year':Y,**y}
 
 if __name__=='__main__':
-    a=argparse.ArgumentParser();a.add_argument('cmd');a.add_argument('--jobs',type=int,default=4);a=a.parse_args();os.makedirs(RUNS,exist_ok=True)
+    a=argparse.ArgumentParser();a.add_argument('cmd');a.add_argument('--jobs',type=int,default=4);a.add_argument('--test-only',action='store_true');a=a.parse_args();os.makedirs(RUNS,exist_ok=True)
     if a.cmd=='sweep':
         J=[(m,b,l,k,w,s) for m,b in MB for l in LOSSES for k,w in MODELS for s in range(3)];J.sort(key=lambda j:(j[1]!='1h',j[3]!='gru',-j[4]))   # longest first
         from multiprocessing import Pool
@@ -140,7 +140,7 @@ if __name__=='__main__':
         J=[]
         for _,s_ in S.iterrows():
             k=(s_.market,s_.bar,s_.loss,s_.model,int(s_.width))
-            J+=[('test',*k,sd,None) for sd in range(3)]+[('placebo',*k,0,None)]+[('wf',*k,0,Y) for Y in range(2019,2027)]
+            J+=[('test',*k,sd,None) for sd in range(3)]+([] if a.test_only else [('placebo',*k,0,None)]+[('wf',*k,0,Y) for Y in range(2019,2027)])
         from multiprocessing import Pool
         with Pool(a.jobs,maxtasksperchild=2) as p:O=list(p.imap_unordered(post_job,J))
         T=pd.DataFrame([{k:v for k,v in o.items() if k!='pos'} for o in O]);T.to_csv('docs/ml/results/pnl1_post.csv',index=False)
