@@ -1,0 +1,123 @@
+{
+ "market": "BTCUSDT",
+ "cost_bp": 5.0,
+ "loss": "L2a",
+ "model": "mlp64",
+ "seed": 0,
+ "sec": 1044,
+ "cfg": {
+  "chunk": 2880,
+  "batch": 128,
+  "epoch_batches": 20,
+  "max_epochs": 30,
+  "patience": 5,
+  "lr": 0.001,
+  "wd": 0.001,
+  "drop": 0.2,
+  "head": 16
+ },
+ "val_curve": [
+  {
+   "ep": 0,
+   "sharpe": -80.843,
+   "trades_per_day": 0.38,
+   "time_in_market": 0.0
+  },
+  {
+   "ep": 1,
+   "sharpe": -66.189,
+   "trades_per_day": 0.0,
+   "time_in_market": 0.0
+  },
+  {
+   "ep": 2,
+   "sharpe": -66.81,
+   "trades_per_day": 0.0,
+   "time_in_market": 0.0
+  },
+  {
+   "ep": 3,
+   "sharpe": -66.293,
+   "trades_per_day": 0.0,
+   "time_in_market": 0.0
+  },
+  {
+   "ep": 4,
+   "sharpe": -65.871,
+   "trades_per_day": 0.0,
+   "time_in_market": 0.0
+  },
+  {
+   "ep": 5,
+   "sharpe": -65.694,
+   "trades_per_day": 0.0,
+   "time_in_market": 0.0
+  },
+  {
+   "ep": 6,
+   "sharpe": -65.568,
+   "trades_per_day": 0.0,
+   "time_in_market": 0.0
+  },
+  {
+   "ep": 7,
+   "sharpe": -72.655,
+   "trades_per_day": 0.0,
+   "time_in_market": 0.0
+  },
+  {
+   "ep": 8,
+   "sharpe": -75.185,
+   "trades_per_day": 0.0,
+   "time_in_market": 0.0
+  },
+  {
+   "ep": 9,
+   "sharpe": -68.91,
+   "trades_per_day": 0.0,
+   "time_in_market": 0.0
+  },
+  {
+   "ep": 10,
+   "sharpe": -67.328,
+   "trades_per_day": 0.0,
+   "time_in_market": 0.0
+  },
+  {
+   "ep": 11,
+   "sharpe": -72.836,
+   "trades_per_day": 0.0,
+   "time_in_market": 0.0
+  }
+ ],
+ "val": {
+  "sharpe": -65.568,
+  "alpha_sharpe": -66.0,
+  "beta_bh": -0.0,
+  "beta_trend": -0.001,
+  "bh_sharpe": 2.154,
+  "ann_ret_pct": -15.73,
+  "max_dd_pct": 14.5,
+  "trades_per_day": 0.0,
+  "turnover_per_day": 0.86,
+  "median_hold_min": 0.0,
+  "time_in_market": 0.0,
+  "mean_pos": -0.0,
+  "corr_trend_sign": -0.022
+ },
+ "train": {
+  "sharpe": -77.703,
+  "alpha_sharpe": -77.709,
+  "beta_bh": 0.0,
+  "beta_trend": 0.0,
+  "bh_sharpe": 0.505,
+  "ann_ret_pct": -15.36,
+  "max_dd_pct": 45.9,
+  "trades_per_day": 0.0,
+  "turnover_per_day": 0.86,
+  "median_hold_min": 0.0,
+  "time_in_market": 0.0,
+  "mean_pos": -0.0,
+  "corr_trend_sign": 0.061
+ }
+}
