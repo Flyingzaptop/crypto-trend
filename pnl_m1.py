@@ -101,8 +101,8 @@ def train(m,cost_bp,loss,kind,seed,dev,cfg=CFG,log=None,T=None):
 
 if __name__=='__main__':
     a=argparse.ArgumentParser();a.add_argument('cmd');a.add_argument('args',nargs='*');a.add_argument('--device',default='cuda' if torch.cuda.is_available() else 'cpu')
-    a.add_argument('--epochs',type=int,default=None);a=a.parse_args();dev=torch.device(a.device);cfg=dict(CFG)
-    if a.epochs:cfg['max_epochs']=a.epochs
+    a.add_argument('--epochs',type=int,default=30);a.add_argument('--patience',type=int,default=5);a=a.parse_args();dev=torch.device(a.device);cfg=dict(CFG)
+    cfg['max_epochs']=a.epochs;cfg['patience']=a.patience
     if a.cmd=='bench':
         for kind in ('mlp64','cnn','gru64'):
             c=dict(cfg,max_epochs=2,epoch_batches=5);net,T,tp,vb,h,sec=train('BTCUSDT',5,'L1',kind,0,dev,c);print(kind,f'{sec:.1f}s for 2 epochs x 5 batches (+2 val evals)',vb['sharpe'],flush=True)
