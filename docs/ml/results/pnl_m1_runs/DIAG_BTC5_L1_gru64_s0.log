@@ -12,3 +12,22 @@ BTCUSDT_5bp_L1_gru64_s0 ep 10 540s val {'ep': 10, 'steps': 1100, 'train_loss': -
 BTCUSDT_5bp_L1_gru64_s0 ep 11 589s val {'ep': 11, 'steps': 1200, 'train_loss': -0.00014, 'sharpe': -0.933, 'trades_per_day': 0.39, 'time_in_market': 1.0}
 BTCUSDT_5bp_L1_gru64_s0 ep 12 638s val {'ep': 12, 'steps': 1300, 'train_loss': -0.00067, 'sharpe': -0.897, 'trades_per_day': 0.37, 'time_in_market': 1.0}
 BTCUSDT_5bp_L1_gru64_s0 ep 13 686s val {'ep': 13, 'steps': 1400, 'train_loss': -0.00031, 'sharpe': -0.94, 'trades_per_day': 0.34, 'time_in_market': 1.0}
+BTCUSDT_5bp_L1_gru64_s0 ep 14 735s val {'ep': 14, 'steps': 1500, 'train_loss': -0.00048, 'sharpe': -0.875, 'trades_per_day': 0.35, 'time_in_market': 1.0}
+BTCUSDT_5bp_L1_gru64_s0 ep 15 784s val {'ep': 15, 'steps': 1600, 'train_loss': -0.0006, 'sharpe': -0.892, 'trades_per_day': 0.35, 'time_in_market': 1.0}
+BTCUSDT_5bp_L1_gru64_s0 ep 16 833s val {'ep': 16, 'steps': 1700, 'train_loss': -0.00042, 'sharpe': -1.095, 'trades_per_day': 0.36, 'time_in_market': 1.0}
+BTCUSDT_5bp_L1_gru64_s0 ep 17 882s val {'ep': 17, 'steps': 1800, 'train_loss': -0.00044, 'sharpe': -0.918, 'trades_per_day': 0.37, 'time_in_market': 1.0}
+BTCUSDT_5bp_L1_gru64_s0 ep 18 931s val {'ep': 18, 'steps': 1900, 'train_loss': -0.00082, 'sharpe': -0.952, 'trades_per_day': 0.34, 'time_in_market': 1.0}
+BTCUSDT_5bp_L1_gru64_s0 ep 19 980s val {'ep': 19, 'steps': 2000, 'train_loss': -0.00066, 'sharpe': -0.711, 'trades_per_day': 0.3, 'time_in_market': 1.0}
+BTCUSDT_5bp_L1_gru64_s0 ep 20 1029s val {'ep': 20, 'steps': 2100, 'train_loss': -0.00063, 'sharpe': -1.013, 'trades_per_day': 0.25, 'time_in_market': 1.0}
+BTCUSDT_5bp_L1_gru64_s0 ep 21 1078s val {'ep': 21, 'steps': 2200, 'train_loss': -0.00058, 'sharpe': -0.965, 'trades_per_day': 0.21, 'time_in_market': 1.0}
+BTCUSDT_5bp_L1_gru64_s0 ep 22 1127s val {'ep': 22, 'steps': 2300, 'train_loss': -0.00066, 'sharpe': -0.823, 'trades_per_day': 0.23, 'time_in_market': 1.0}
+BTCUSDT_5bp_L1_gru64_s0 ep 23 1176s val {'ep': 23, 'steps': 2400, 'train_loss': -0.00037, 'sharpe': -0.174, 'trades_per_day': 0.3, 'time_in_market': 1.0}
+BTCUSDT_5bp_L1_gru64_s0 ep 24 1224s val {'ep': 24, 'steps': 2500, 'train_loss': -0.00083, 'sharpe': -0.226, 'trades_per_day': 0.27, 'time_in_market': 1.0}
+BTCUSDT_5bp_L1_gru64_s0 ep 25 1273s val {'ep': 25, 'steps': 2600, 'train_loss': -0.00044, 'sharpe': -0.371, 'trades_per_day': 0.16, 'time_in_market': 1.0}
+BTCUSDT_5bp_L1_gru64_s0 ep 26 1322s val {'ep': 26, 'steps': 2700, 'train_loss': -0.00051, 'sharpe': -0.658, 'trades_per_day': 0.15, 'time_in_market': 1.0}
+BTCUSDT_5bp_L1_gru64_s0 ep 27 1371s val {'ep': 27, 'steps': 2800, 'train_loss': -0.00038, 'sharpe': -0.974, 'trades_per_day': 0.12, 'time_in_market': 1.0}
+BTCUSDT_5bp_L1_gru64_s0 ep 28 1420s val {'ep': 28, 'steps': 2900, 'train_loss': -0.00059, 'sharpe': -1.419, 'trades_per_day': 0.13, 'time_in_market': 1.0}
+BTCUSDT_5bp_L1_gru64_s0 ep 29 1469s val {'ep': 29, 'steps': 3000, 'train_loss': -0.00031, 'sharpe': -2.512, 'trades_per_day': 0.09, 'time_in_market': 1.0}
+BTCUSDT_5bp_L1_gru64_s0 ep 30 1518s val {'ep': 30, 'steps': 3100, 'train_loss': -0.00031, 'sharpe': -1.332, 'trades_per_day': 0.2, 'time_in_market': 1.0}
+BTCUSDT_5bp_L1_gru64_s0 ep 31 1567s val {'ep': 31, 'steps': 3200, 'train_loss': -0.00039, 'sharpe': -0.912, 'trades_per_day': 0.2, 'time_in_market': 1.0}
+BTCUSDT_5bp_L1_gru64_s0 done 1566.5326809883118
