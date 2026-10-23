@@ -11,6 +11,24 @@ CTX=['ret15','ret60','ret240','ret1440','ret4320','ret10080','lsv60','lsv43200',
 CTXD=['dsma20','dsma50','dsma100','dret20','dret60','dret120']     # variant C: daily trend state from completed days only
 VARS={'A':dict(pen=False,daily=False,gamma=0.999,gae=0.98),'B':dict(pen=True,daily=False,gamma=0.999,gae=0.98),'C':dict(pen=False,daily=True,gamma=0.99999,gae=0.995)}
 
+def build(c,idx):
+    """Minute features of a close series on its index (used by prep and by the placebo with a shuffled price path)."""
+    lp=np.log(c);r=lp.diff().fillna(0)
+    s1440=r.rolling(1440).std();s60=r.rolling(60).std();s43200=r.rolling(43200,min_periods=20000).std()
+    X=pd.DataFrame(index=idx)
+    for n in (15,60,240,1440,4320,10080):X[f'ret{n}']=(lp-lp.shift(n))/(s1440*np.sqrt(n))
+    X['lsv60']=np.log(s60/s1440);X['lsv43200']=np.log(s1440/s43200)
+    for n in (1440,10080):hi=c.rolling(n).max();lo=c.rolling(n).min();X[f'rng{n}']=((c-lo)/(hi-lo)).fillna(0.5)*2-1
+    h=idx.hour+idx.minute/60;d=idx.dayofweek+h/24
+    X['hs'],X['hc'],X['ds'],X['dc']=np.sin(2*np.pi*h/24),np.cos(2*np.pi*h/24),np.sin(2*np.pi*d/7),np.cos(2*np.pi*d/7)
+    dc_=c.resample('1D').last().dropna();ld=np.log(dc_);sd=ld.diff().rolling(20).std();Dd=pd.DataFrame(index=dc_.index)
+    for n in (20,50,100):Dd[f'dsma{n}']=(ld-np.log(dc_.rolling(n).mean()))/(sd*np.sqrt(n))
+    for n in (20,60,120):Dd[f'dret{n}']=(ld-ld.shift(n))/(sd*np.sqrt(n))
+    Dd=Dd.shift(1)                   # value for day D uses closes up to D-1 (completed days only)
+    for k in CTXD:X[k]=Dd[k].reindex(idx.floor('D')).values
+    X=X.replace([np.inf,-np.inf],np.nan);z=(r/s1440).clip(-8,8)
+    return dict(t=idx.as_unit('ns').asi8,r=r.values,lp=lp.values,s=s1440.values,z=z.values.astype('float32'),X=X[CTX+CTXD].values.astype('float32'))
+
 def prep(sym):
     """Minute grid with features; cached as npz. Rows = minutes; decision at t uses data up to the close of minute t."""
     path=f'{CACHE}/{sym}.npz'
@@ -20,29 +38,21 @@ def prep(sym):
         else:
             m=data_m1.load(sym).close;m.index=m.index.floor('min');m=m[~m.index.duplicated()]
             idx=pd.date_range('2018-11-01',m.index[-1],freq='min');c=m.reindex(idx).ffill()
-        lp=np.log(c);r=lp.diff().fillna(0)
-        s1440=r.rolling(1440).std();s60=r.rolling(60).std();s43200=r.rolling(43200,min_periods=20000).std()
-        X=pd.DataFrame(index=idx)
-        for n in (15,60,240,1440,4320,10080):X[f'ret{n}']=(lp-lp.shift(n))/(s1440*np.sqrt(n))
-        X['lsv60']=np.log(s60/s1440);X['lsv43200']=np.log(s1440/s43200)
-        for n in (1440,10080):hi=c.rolling(n).max();lo=c.rolling(n).min();X[f'rng{n}']=((c-lo)/(hi-lo)).fillna(0.5)*2-1
-        h=idx.hour+idx.minute/60;d=idx.dayofweek+h/24
-        X['hs'],X['hc'],X['ds'],X['dc']=np.sin(2*np.pi*h/24),np.cos(2*np.pi*h/24),np.sin(2*np.pi*d/7),np.cos(2*np.pi*d/7)
-        dc_=c.resample('1D').last().dropna();ld=np.log(dc_);sd=ld.diff().rolling(20).std();Dd=pd.DataFrame(index=dc_.index)
-        for n in (20,50,100):Dd[f'dsma{n}']=(ld-np.log(dc_.rolling(n).mean()))/(sd*np.sqrt(n))
-        for n in (20,60,120):Dd[f'dret{n}']=(ld-ld.shift(n))/(sd*np.sqrt(n))
-        Dd=Dd.shift(1)                                   # value for day D uses closes up to D-1 (completed days only)
-        for k in CTXD:X[k]=Dd[k].reindex(idx.floor('D')).values
-        X=X.replace([np.inf,-np.inf],np.nan);z=(r/s1440).clip(-8,8)
+        F=build(c,idx)
         os.makedirs(CACHE,exist_ok=True)
-        np.savez(path,t=idx.as_unit('ns').asi8,r=r.values,lp=lp.values,s=s1440.values,z=z.values.astype('float32'),X=X[CTX+CTXD].values.astype('float32'))
+        np.savez(path,**F)
     d=np.load(path);t=pd.to_datetime(d['t'],unit='ns')
     ok=np.isfinite(d['X'][:,:6]).all(1)&np.isfinite(d['z'])&np.isfinite(d['s'])
     return t,d['r'],d['lp'],d['s'],np.nan_to_num(d['z']),d['X'],ok
 
 class Data:
-    def __init__(s,sym,daily=False,train=TRAIN):
-        s.train=train;s.t,s.r,s.lp,s.sig,s.z,X,ok=prep(sym);X=X if daily else X[:,:len(CTX)];i0,i1=s.span(train)
+    def __init__(s,sym,daily=False,train=TRAIN,placebo_seed=None):
+        s.train=train;s.t,s.r,s.lp,s.sig,s.z,X,ok=prep(sym)
+        if placebo_seed is not None:                     # returns shuffled in blocks of 20 minutes, price path and features rebuilt
+            r=s.r.copy();nb=len(r)//20;g=np.random.default_rng(placebo_seed);ix=np.concatenate([np.arange(k*20,(k+1)*20) for k in g.permutation(nb)]+[np.arange(nb*20,len(r))])
+            c=pd.Series(np.exp(s.lp[0]+np.cumsum(r[ix])),index=s.t);F=build(c,s.t);s.r,s.lp,s.sig,X=F['r'],F['lp'],F['s'],F['X']
+            ok=np.isfinite(X[:,:6]).all(1)&np.isfinite(F['z'])&np.isfinite(s.sig);s.z=np.nan_to_num(F['z'])
+        X=X if daily else X[:,:len(CTX)];i0,i1=s.span(train)
         mu,sd=np.nanmean(X[i0:i1],0),np.nanstd(X[i0:i1],0)+1e-9;s.X=np.clip(np.nan_to_num((X-mu)/sd),-10,10).astype('float32')
         s.rbar=s.r[i0:i1].mean();s.first=int(np.argmax(ok[WIN:]))+WIN
     def span(s,p):return int(np.searchsorted(s.t,pd.Timestamp(p[0]))),int(np.searchsorted(s.t,pd.Timestamp(p[1]),side='right'))
