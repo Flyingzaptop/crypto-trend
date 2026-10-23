@@ -43,7 +43,8 @@ class Net(torch.nn.Module):
         H=s.A(s.enc(T,t));B,L,_=H.shape;p=torch.zeros(B,device=H.device) if p0 is None else p0;P=[]
         for i in range(L):
             q=torch.tanh(s.v(torch.tanh(H[:,i]+s.b*p[:,None])))[:,0]
-            p=torch.sign(q)*torch.relu(q.abs()-s.dead)/(1-s.dead) if s.dead>0 else q        # dead band (addendum 4b): small moves are not traded
+            # dead band (addendum 4b) with a straight-through gradient: forward = band, backward = identity (else p=0 would never move)
+            p=q+(torch.sign(q)*torch.relu(q.abs()-s.dead)/(1-s.dead)-q).detach() if s.dead>0 else q
             P.append(p)
         return torch.stack(P,1)
 
