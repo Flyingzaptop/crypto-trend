@@ -147,8 +147,8 @@ if __name__=='__main__':
         ens={}                                                # ensemble = mean position of the 3 seeds on test
         for o in O:
             if o['what']=='test':ens.setdefault((o['m'],o['b']),[]).append(o['pos'])
-        rows=[]
+        rows=[];DS={}
         for (m,b),Ps in ens.items():
             D=Data(m,b);ix=D.idx(TEST0,'2099');Pm=pd.concat(Ps,axis=1).mean(1).values;pr=np.r_[0.,Pm[:-1]];pnl=Pm*D.r[ix]-Pm*D.f[ix]-D.cost*np.abs(Pm-pr)
-            g=pd.Series(pnl,index=D.t[ix]).resample('1D');d=g.sum()[g.count()>0];rows.append({'m':m,'b':b,'ensemble_test_sharpe':round(sharpe(d,365 if m!='XAUUSD' else 252),3)})
-        pd.DataFrame(rows).to_csv('docs/ml/results/pnl1_ensemble.csv',index=False);print(T.to_string(index=False));print(pd.DataFrame(rows).to_string(index=False))
+            g=pd.Series(pnl,index=D.t[ix]).resample('1D');d=g.sum()[g.count()>0];DS[f'{m}_{b}']=d;rows.append({'m':m,'b':b,'ensemble_test_sharpe':round(sharpe(d,365 if m!='XAUUSD' else 252),3)})
+        pd.DataFrame(rows).to_csv('docs/ml/results/pnl1_ensemble.csv',index=False);pd.DataFrame(DS).to_csv('docs/ml/results/pnl1_ensemble_daily.csv');print(T.to_string(index=False));print(pd.DataFrame(rows).to_string(index=False))
