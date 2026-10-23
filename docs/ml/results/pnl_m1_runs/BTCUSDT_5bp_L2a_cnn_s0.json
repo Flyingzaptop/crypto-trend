@@ -1,0 +1,117 @@
+{
+ "market": "BTCUSDT",
+ "cost_bp": 5.0,
+ "loss": "L2a",
+ "model": "cnn",
+ "seed": 0,
+ "sec": 1106,
+ "cfg": {
+  "chunk": 2880,
+  "batch": 128,
+  "epoch_batches": 20,
+  "max_epochs": 30,
+  "patience": 5,
+  "lr": 0.001,
+  "wd": 0.001,
+  "drop": 0.2,
+  "head": 16
+ },
+ "val_curve": [
+  {
+   "ep": 0,
+   "sharpe": -82.149,
+   "trades_per_day": 301.45,
+   "time_in_market": 0.602
+  },
+  {
+   "ep": 1,
+   "sharpe": -84.076,
+   "trades_per_day": 47.68,
+   "time_in_market": 0.058
+  },
+  {
+   "ep": 2,
+   "sharpe": -61.117,
+   "trades_per_day": 4.73,
+   "time_in_market": 0.007
+  },
+  {
+   "ep": 3,
+   "sharpe": -41.759,
+   "trades_per_day": 0.0,
+   "time_in_market": 0.0
+  },
+  {
+   "ep": 4,
+   "sharpe": -45.793,
+   "trades_per_day": 0.0,
+   "time_in_market": 0.0
+  },
+  {
+   "ep": 5,
+   "sharpe": -34.861,
+   "trades_per_day": 0.0,
+   "time_in_market": 0.0
+  },
+  {
+   "ep": 6,
+   "sharpe": -50.174,
+   "trades_per_day": 0.0,
+   "time_in_market": 0.0
+  },
+  {
+   "ep": 7,
+   "sharpe": -48.126,
+   "trades_per_day": 0.0,
+   "time_in_market": 0.0
+  },
+  {
+   "ep": 8,
+   "sharpe": -46.488,
+   "trades_per_day": 0.0,
+   "time_in_market": 0.0
+  },
+  {
+   "ep": 9,
+   "sharpe": -45.37,
+   "trades_per_day": 0.0,
+   "time_in_market": 0.0
+  },
+  {
+   "ep": 10,
+   "sharpe": -46.265,
+   "trades_per_day": 0.0,
+   "time_in_market": 0.0
+  }
+ ],
+ "val": {
+  "sharpe": -34.861,
+  "alpha_sharpe": -61.017,
+  "beta_bh": 0.003,
+  "beta_trend": -0.0,
+  "bh_sharpe": 2.154,
+  "ann_ret_pct": -4.73,
+  "max_dd_pct": 4.6,
+  "trades_per_day": 0.0,
+  "turnover_per_day": 0.27,
+  "median_hold_min": 0.0,
+  "time_in_market": 0.0,
+  "mean_pos": 0.003,
+  "corr_trend_sign": 0.041
+ },
+ "train": {
+  "sharpe": -22.668,
+  "alpha_sharpe": -56.379,
+  "beta_bh": 0.003,
+  "beta_trend": 0.001,
+  "bh_sharpe": 0.505,
+  "ann_ret_pct": -4.89,
+  "max_dd_pct": 17.8,
+  "trades_per_day": 0.0,
+  "turnover_per_day": 0.27,
+  "median_hold_min": 0.0,
+  "time_in_market": 0.0,
+  "mean_pos": 0.003,
+  "corr_trend_sign": -0.009
+ }
+}
