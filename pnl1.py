@@ -113,9 +113,42 @@ def sweep_job(job):
     torch.save(net.state_dict(),p.replace('.json','.pt'));json.dump({'market':m,'bar':b,'loss':loss,'model':kind,'width':w,'seed':seed,'epochs':len(hist),'val_curve':hist,'train':tr,'val':va},open(p,'w'),indent=1)
     print(tag(*job),'val',va['sharpe'],'train',tr['sharpe'],flush=True)
 
+def post_job(job):
+    """('test'|'placebo'|'wf', m, b, loss, kind, w, seed, year) for the selected point of a market x bar."""
+    torch.set_num_threads(1);what,m,b,loss,kind,w,seed,Y=job;base=baselines(m);ad=365 if m!='XAUUSD' else 252
+    if what=='test':
+        D=Data(m,b);net=Net(D.X.shape[1],kind,w);net.load_state_dict(torch.load(f'{RUNS}/{tag(m,b,loss,kind,w,seed)}.pt'));te,d,P=metrics(net,D,D.idx(TEST0,'2099'),base)
+        return {'what':what,'m':m,'b':b,'seed':seed,**te,'pos':P}
+    if what=='placebo':
+        D=Data(m,b,placebo_seed=100+seed);net,best,_=train(D,kind,w,loss,seed,D.itr,D.idx(*VAL));te,_,_=metrics(net,D,D.idx(TEST0,'2099'),base)
+        return {'what':what,'m':m,'b':b,'seed':seed,**te}
+    D=Data(m,b);tr=np.where(D.t<=pd.Timestamp(f'{Y-2}-12-31 23:59'))[0];va=D.idx(f'{Y-1}-01-01',f'{Y-1}-12-31 23:59')
+    if len(tr)<CH*4 or len(va)<20:return {'what':what,'m':m,'b':b,'year':Y,'skip':True}
+    net,best,_=train(D,kind,w,loss,seed,tr,va);y,_,_=metrics(net,D,D.idx(f'{Y}-01-01',f'{Y}-12-31 23:59'),base)
+    return {'what':what,'m':m,'b':b,'seed':seed,'year':Y,**y}
+
 if __name__=='__main__':
     a=argparse.ArgumentParser();a.add_argument('cmd');a.add_argument('--jobs',type=int,default=4);a=a.parse_args();os.makedirs(RUNS,exist_ok=True)
     if a.cmd=='sweep':
         J=[(m,b,l,k,w,s) for m,b in MB for l in LOSSES for k,w in MODELS for s in range(3)];J.sort(key=lambda j:(j[1]!='1h',j[3]!='gru',-j[4]))   # longest first
         from multiprocessing import Pool
         with Pool(a.jobs,maxtasksperchild=4) as p:list(p.imap_unordered(sweep_job,J))
+    elif a.cmd=='select':
+        R=pd.DataFrame([json.load(open(p)) for p in glob.glob(f'{RUNS}/*.json')]);R['val_sharpe']=R.val.apply(lambda v:v['sharpe']);R['train_sharpe']=R.train.apply(lambda v:v['sharpe'])
+        P=R.groupby(['market','bar','loss','model','width']).agg(n=('seed','count'),val=('val_sharpe','mean'),val_sd=('val_sharpe','std'),train=('train_sharpe','mean')).reset_index()
+        P.to_csv('docs/ml/results/pnl1_points.csv',index=False);P=P[P.n==3];S=P.loc[P.groupby(['market','bar']).val.idxmax()];S.to_csv('docs/ml/results/pnl1_selected.csv',index=False);print(S.to_string(index=False),flush=True)
+        J=[]
+        for _,s_ in S.iterrows():
+            k=(s_.market,s_.bar,s_.loss,s_.model,int(s_.width))
+            J+=[('test',*k,sd,None) for sd in range(3)]+[('placebo',*k,0,None)]+[('wf',*k,0,Y) for Y in range(2019,2027)]
+        from multiprocessing import Pool
+        with Pool(a.jobs,maxtasksperchild=2) as p:O=list(p.imap_unordered(post_job,J))
+        T=pd.DataFrame([{k:v for k,v in o.items() if k!='pos'} for o in O]);T.to_csv('docs/ml/results/pnl1_post.csv',index=False)
+        ens={}                                                # ensemble = mean position of the 3 seeds on test
+        for o in O:
+            if o['what']=='test':ens.setdefault((o['m'],o['b']),[]).append(o['pos'])
+        rows=[]
+        for (m,b),Ps in ens.items():
+            D=Data(m,b);ix=D.idx(TEST0,'2099');Pm=pd.concat(Ps,axis=1).mean(1).values;pr=np.r_[0.,Pm[:-1]];pnl=Pm*D.r[ix]-Pm*D.f[ix]-D.cost*np.abs(Pm-pr)
+            g=pd.Series(pnl,index=D.t[ix]).resample('1D');d=g.sum()[g.count()>0];rows.append({'m':m,'b':b,'ensemble_test_sharpe':round(sharpe(d,365 if m!='XAUUSD' else 252),3)})
+        pd.DataFrame(rows).to_csv('docs/ml/results/pnl1_ensemble.csv',index=False);print(T.to_string(index=False));print(pd.DataFrame(rows).to_string(index=False))
