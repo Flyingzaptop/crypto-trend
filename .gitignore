@@ -12,3 +12,4 @@ docs/ml/results/rlm1_runs/*.pt
 docs/ml/results/rlm2_runs/*.pt
 data/ml/gold/
 data/news/
+docs/ml/results/pnl1_runs/*.pt
