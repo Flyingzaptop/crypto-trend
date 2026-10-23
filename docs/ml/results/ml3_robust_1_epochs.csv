@@ -1,0 +1,5 @@
+case,2019,2020,2021,2022,2023,2024,2025,2026,coins_2020,2023-26
+"protocol (yearly retrain), weekly accounting",,,0.63,1.35,-0.05,2.65,2.2,1.58,,
+"protocol, daily constant-weight accounting",,,0.55,0.13,0.01,2.6,1.31,0.64,,
+"spot-ranked top-50, trained 2019 only -> 2020",,-0.49,,,,,,,50.0,
+"single model trained <=2022, no retrain",,,,,-0.01,2.61,0.79,0.63,,1.05

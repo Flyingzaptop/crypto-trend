@@ -5,3 +5,12 @@ __pycache__/
 data/
 !docs/results/*.csv
 !docs/vol/results/*.csv
+!docs/ml/results/*.csv
+docs/ml/results/rl1_runs/
+docs/ml/results/rlm1_runs/*.parquet
+docs/ml/results/rlm1_runs/*.pt
+docs/ml/results/rlm2_runs/*.pt
+data/ml/gold/
+data/news/
+docs/ml/results/pnl1_runs/*.pt
+docs/ml/results/pnl_m1_runs/*.pt

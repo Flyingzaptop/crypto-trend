@@ -1,0 +1,61 @@
+{
+ "sym": "ETHUSDT",
+ "variant": "C",
+ "cost_bp": 5,
+ "seed": 1,
+ "val": [
+  {
+   "steps": 1500000,
+   "sharpe": -30.53,
+   "alpha_sharpe": -34.02,
+   "trades_per_day": 67.8,
+   "time_in_market": 0.025,
+   "corr_trend_sign": -0.176
+  },
+  {
+   "steps": 3000000,
+   "sharpe": -6.77,
+   "alpha_sharpe": -6.65,
+   "trades_per_day": 0.5,
+   "time_in_market": 0.0,
+   "corr_trend_sign": 0.048
+  },
+  {
+   "steps": 4500000,
+   "sharpe": -1.72,
+   "alpha_sharpe": -1.65,
+   "trades_per_day": 0.0,
+   "time_in_market": 0.0,
+   "corr_trend_sign": -0.021
+  },
+  {
+   "steps": 6000000,
+   "sharpe": 0.0,
+   "alpha_sharpe": 0.0,
+   "trades_per_day": 0.0,
+   "time_in_market": 0.0,
+   "corr_trend_sign": NaN
+  }
+ ],
+ "test": {
+  "sharpe": -0.6,
+  "alpha_sharpe": -0.6,
+  "beta": -0.0,
+  "cagr_pct": -0.0,
+  "max_dd_pct": 0.1,
+  "trades_per_day": 0.0,
+  "time_in_market": 0.0,
+  "median_hold_min": 1.0,
+  "corr_trend_sign": -0.031,
+  "corr_trend_size": -0.005,
+  "by_year_return_pct": {
+   "2024": 0.0,
+   "2025": 0.0,
+   "2026": -0.1
+  }
+ },
+ "test_period": [
+  "2024-01-01 00:00:00",
+  "2026-10-21 23:58:00"
+ ]
+}

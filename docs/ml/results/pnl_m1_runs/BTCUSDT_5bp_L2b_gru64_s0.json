@@ -1,0 +1,111 @@
+{
+ "market": "BTCUSDT",
+ "cost_bp": 5.0,
+ "loss": "L2b",
+ "model": "gru64",
+ "seed": 0,
+ "sec": 859,
+ "cfg": {
+  "chunk": 2880,
+  "batch": 128,
+  "epoch_batches": 20,
+  "max_epochs": 30,
+  "patience": 5,
+  "lr": 0.001,
+  "wd": 0.001,
+  "drop": 0.2,
+  "head": 16
+ },
+ "val_curve": [
+  {
+   "ep": 0,
+   "sharpe": -38.753,
+   "trades_per_day": 36.66,
+   "time_in_market": 0.089
+  },
+  {
+   "ep": 1,
+   "sharpe": -31.47,
+   "trades_per_day": 2.71,
+   "time_in_market": 0.009
+  },
+  {
+   "ep": 2,
+   "sharpe": -28.273,
+   "trades_per_day": 0.25,
+   "time_in_market": 0.001
+  },
+  {
+   "ep": 3,
+   "sharpe": -31.71,
+   "trades_per_day": 0.0,
+   "time_in_market": 0.0
+  },
+  {
+   "ep": 4,
+   "sharpe": -25.298,
+   "trades_per_day": 0.0,
+   "time_in_market": 0.0
+  },
+  {
+   "ep": 5,
+   "sharpe": -28.968,
+   "trades_per_day": 0.0,
+   "time_in_market": 0.0
+  },
+  {
+   "ep": 6,
+   "sharpe": -26.647,
+   "trades_per_day": 0.0,
+   "time_in_market": 0.0
+  },
+  {
+   "ep": 7,
+   "sharpe": -28.266,
+   "trades_per_day": 0.0,
+   "time_in_market": 0.0
+  },
+  {
+   "ep": 8,
+   "sharpe": -27.513,
+   "trades_per_day": 0.0,
+   "time_in_market": 0.0
+  },
+  {
+   "ep": 9,
+   "sharpe": -27.054,
+   "trades_per_day": 0.0,
+   "time_in_market": 0.0
+  }
+ ],
+ "val": {
+  "sharpe": -25.298,
+  "alpha_sharpe": -36.829,
+  "beta_bh": 0.005,
+  "beta_trend": -0.001,
+  "bh_sharpe": 2.154,
+  "ann_ret_pct": -8.42,
+  "max_dd_pct": 8.1,
+  "trades_per_day": 0.0,
+  "turnover_per_day": 0.5,
+  "median_hold_min": 0.0,
+  "time_in_market": 0.0,
+  "mean_pos": 0.008,
+  "corr_trend_sign": -0.028
+ },
+ "train": {
+  "sharpe": -16.09,
+  "alpha_sharpe": -24.699,
+  "beta_bh": 0.005,
+  "beta_trend": 0.001,
+  "bh_sharpe": 0.505,
+  "ann_ret_pct": -8.34,
+  "max_dd_pct": 28.4,
+  "trades_per_day": 0.0,
+  "turnover_per_day": 0.48,
+  "median_hold_min": 0.0,
+  "time_in_market": 0.0,
+  "mean_pos": 0.007,
+  "corr_trend_sign": -0.231
+ }
+}

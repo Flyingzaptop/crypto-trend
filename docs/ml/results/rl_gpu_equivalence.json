@@ -1,0 +1,22 @@
+{
+ "BTCUSDT": {
+  "obs": 0.0,
+  "rew": 0.0,
+  "pen": 0.0,
+  "pos": 0.0,
+  "held": 0.0,
+  "entry": 0.0,
+  "pass": true,
+  "delta_always_hold_max_err": 0.0
+ },
+ "XAUUSD": {
+  "obs": 0.0,
+  "rew": 0.0,
+  "pen": 0.0,
+  "pos": 0.0,
+  "held": 0.0,
+  "entry": 0.0,
+  "pass": true,
+  "delta_always_hold_max_err": 0.0
+ }
+}
