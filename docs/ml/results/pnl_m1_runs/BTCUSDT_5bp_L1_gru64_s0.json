@@ -1,0 +1,309 @@
+{
+ "market": "BTCUSDT",
+ "cost_bp": 5.0,
+ "loss": "L1",
+ "model": "gru64",
+ "seed": 0,
+ "sec": 1567,
+ "cfg": {
+  "chunk": 720,
+  "batch": 512,
+  "epoch_batches": 100,
+  "max_epochs": 40,
+  "min_epochs": 30,
+  "patience": 8,
+  "lr": 0.0003,
+  "wd": 0.001,
+  "drop": 0.2,
+  "head": 16,
+  "dead": 0.1
+ },
+ "val_curve": [
+  {
+   "ep": 0,
+   "steps": 100,
+   "train_loss": 0.03319,
+   "sharpe": -21.444,
+   "trades_per_day": 30.56,
+   "time_in_market": 0.856
+  },
+  {
+   "ep": 1,
+   "steps": 200,
+   "train_loss": 0.01517,
+   "sharpe": -3.416,
+   "trades_per_day": 4.25,
+   "time_in_market": 0.995
+  },
+  {
+   "ep": 2,
+   "steps": 300,
+   "train_loss": 0.00381,
+   "sharpe": -2.971,
+   "trades_per_day": 4.2,
+   "time_in_market": 0.996
+  },
+  {
+   "ep": 3,
+   "steps": 400,
+   "train_loss": 0.00265,
+   "sharpe": -3.431,
+   "trades_per_day": 5.84,
+   "time_in_market": 0.995
+  },
+  {
+   "ep": 4,
+   "steps": 500,
+   "train_loss": 0.00142,
+   "sharpe": -2.896,
+   "trades_per_day": 4.73,
+   "time_in_market": 0.997
+  },
+  {
+   "ep": 5,
+   "steps": 600,
+   "train_loss": 0.00083,
+   "sharpe": -1.663,
+   "trades_per_day": 3.39,
+   "time_in_market": 0.998
+  },
+  {
+   "ep": 6,
+   "steps": 700,
+   "train_loss": 0.00026,
+   "sharpe": -0.549,
+   "trades_per_day": 1.67,
+   "time_in_market": 0.999
+  },
+  {
+   "ep": 7,
+   "steps": 800,
+   "train_loss": 0.00075,
+   "sharpe": -0.924,
+   "trades_per_day": 2.02,
+   "time_in_market": 0.999
+  },
+  {
+   "ep": 8,
+   "steps": 900,
+   "train_loss": 0.00041,
+   "sharpe": -0.788,
+   "trades_per_day": 1.53,
+   "time_in_market": 0.999
+  },
+  {
+   "ep": 9,
+   "steps": 1000,
+   "train_loss": 0.00031,
+   "sharpe": -1.422,
+   "trades_per_day": 1.4,
+   "time_in_market": 0.999
+  },
+  {
+   "ep": 10,
+   "steps": 1100,
+   "train_loss": -9e-05,
+   "sharpe": -1.361,
+   "trades_per_day": 0.89,
+   "time_in_market": 1.0
+  },
+  {
+   "ep": 11,
+   "steps": 1200,
+   "train_loss": -0.00014,
+   "sharpe": -0.933,
+   "trades_per_day": 0.39,
+   "time_in_market": 1.0
+  },
+  {
+   "ep": 12,
+   "steps": 1300,
+   "train_loss": -0.00067,
+   "sharpe": -0.897,
+   "trades_per_day": 0.37,
+   "time_in_market": 1.0
+  },
+  {
+   "ep": 13,
+   "steps": 1400,
+   "train_loss": -0.00031,
+   "sharpe": -0.94,
+   "trades_per_day": 0.34,
+   "time_in_market": 1.0
+  },
+  {
+   "ep": 14,
+   "steps": 1500,
+   "train_loss": -0.00048,
+   "sharpe": -0.875,
+   "trades_per_day": 0.35,
+   "time_in_market": 1.0
+  },
+  {
+   "ep": 15,
+   "steps": 1600,
+   "train_loss": -0.0006,
+   "sharpe": -0.892,
+   "trades_per_day": 0.35,
+   "time_in_market": 1.0
+  },
+  {
+   "ep": 16,
+   "steps": 1700,
+   "train_loss": -0.00042,
+   "sharpe": -1.095,
+   "trades_per_day": 0.36,
+   "time_in_market": 1.0
+  },
+  {
+   "ep": 17,
+   "steps": 1800,
+   "train_loss": -0.00044,
+   "sharpe": -0.918,
+   "trades_per_day": 0.37,
+   "time_in_market": 1.0
+  },
+  {
+   "ep": 18,
+   "steps": 1900,
+   "train_loss": -0.00082,
+   "sharpe": -0.952,
+   "trades_per_day": 0.34,
+   "time_in_market": 1.0
+  },
+  {
+   "ep": 19,
+   "steps": 2000,
+   "train_loss": -0.00066,
+   "sharpe": -0.711,
+   "trades_per_day": 0.3,
+   "time_in_market": 1.0
+  },
+  {
+   "ep": 20,
+   "steps": 2100,
+   "train_loss": -0.00063,
+   "sharpe": -1.013,
+   "trades_per_day": 0.25,
+   "time_in_market": 1.0
+  },
+  {
+   "ep": 21,
+   "steps": 2200,
+   "train_loss": -0.00058,
+   "sharpe": -0.965,
+   "trades_per_day": 0.21,
+   "time_in_market": 1.0
+  },
+  {
+   "ep": 22,
+   "steps": 2300,
+   "train_loss": -0.00066,
+   "sharpe": -0.823,
+   "trades_per_day": 0.23,
+   "time_in_market": 1.0
+  },
+  {
+   "ep": 23,
+   "steps": 2400,
+   "train_loss": -0.00037,
+   "sharpe": -0.174,
+   "trades_per_day": 0.3,
+   "time_in_market": 1.0
+  },
+  {
+   "ep": 24,
+   "steps": 2500,
+   "train_loss": -0.00083,
+   "sharpe": -0.226,
+   "trades_per_day": 0.27,
+   "time_in_market": 1.0
+  },
+  {
+   "ep": 25,
+   "steps": 2600,
+   "train_loss": -0.00044,
+   "sharpe": -0.371,
+   "trades_per_day": 0.16,
+   "time_in_market": 1.0
+  },
+  {
+   "ep": 26,
+   "steps": 2700,
+   "train_loss": -0.00051,
+   "sharpe": -0.658,
+   "trades_per_day": 0.15,
+   "time_in_market": 1.0
+  },
+  {
+   "ep": 27,
+   "steps": 2800,
+   "train_loss": -0.00038,
+   "sharpe": -0.974,
+   "trades_per_day": 0.12,
+   "time_in_market": 1.0
+  },
+  {
+   "ep": 28,
+   "steps": 2900,
+   "train_loss": -0.00059,
+   "sharpe": -1.419,
+   "trades_per_day": 0.13,
+   "time_in_market": 1.0
+  },
+  {
+   "ep": 29,
+   "steps": 3000,
+   "train_loss": -0.00031,
+   "sharpe": -2.512,
+   "trades_per_day": 0.09,
+   "time_in_market": 1.0
+  },
+  {
+   "ep": 30,
+   "steps": 3100,
+   "train_loss": -0.00031,
+   "sharpe": -1.332,
+   "trades_per_day": 0.2,
+   "time_in_market": 1.0
+  },
+  {
+   "ep": 31,
+   "steps": 3200,
+   "train_loss": -0.00039,
+   "sharpe": -0.912,
+   "trades_per_day": 0.2,
+   "time_in_market": 1.0
+  }
+ ],
+ "val": {
+  "sharpe": -0.174,
+  "alpha_sharpe": 0.635,
+  "beta_bh": -0.224,
+  "beta_trend": 0.385,
+  "bh_sharpe": 2.154,
+  "ann_ret_pct": -3.56,
+  "max_dd_pct": 19.4,
+  "trades_per_day": 0.3,
+  "turnover_per_day": 0.17,
+  "median_hold_min": 2978.0,
+  "time_in_market": 1.0,
+  "mean_pos": -0.109,
+  "corr_trend_sign": 0.487
+ },
+ "train": {
+  "sharpe": 0.26,
+  "alpha_sharpe": 0.003,
+  "beta_bh": -0.168,
+  "beta_trend": 0.567,
+  "bh_sharpe": 0.505,
+  "ann_ret_pct": 8.46,
+  "max_dd_pct": 36.6,
+  "trades_per_day": 0.18,
+  "turnover_per_day": 0.11,
+  "median_hold_min": 5607.0,
+  "time_in_market": 1.0,
+  "mean_pos": -0.2,
+  "corr_trend_sign": 0.561
+ }
+}
