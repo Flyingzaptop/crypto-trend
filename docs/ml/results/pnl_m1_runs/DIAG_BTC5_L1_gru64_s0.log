@@ -1,0 +1,14 @@
+BTCUSDT_5bp_L1_gru64_s0 ep 0 50s val {'ep': 0, 'steps': 100, 'train_loss': 0.03319, 'sharpe': -21.444, 'trades_per_day': 30.56, 'time_in_market': 0.856}
+BTCUSDT_5bp_L1_gru64_s0 ep 1 99s val {'ep': 1, 'steps': 200, 'train_loss': 0.01517, 'sharpe': -3.416, 'trades_per_day': 4.25, 'time_in_market': 0.995}
+BTCUSDT_5bp_L1_gru64_s0 ep 2 148s val {'ep': 2, 'steps': 300, 'train_loss': 0.00381, 'sharpe': -2.971, 'trades_per_day': 4.2, 'time_in_market': 0.996}
+BTCUSDT_5bp_L1_gru64_s0 ep 3 197s val {'ep': 3, 'steps': 400, 'train_loss': 0.00265, 'sharpe': -3.431, 'trades_per_day': 5.84, 'time_in_market': 0.995}
+BTCUSDT_5bp_L1_gru64_s0 ep 4 246s val {'ep': 4, 'steps': 500, 'train_loss': 0.00142, 'sharpe': -2.896, 'trades_per_day': 4.73, 'time_in_market': 0.997}
+BTCUSDT_5bp_L1_gru64_s0 ep 5 295s val {'ep': 5, 'steps': 600, 'train_loss': 0.00083, 'sharpe': -1.663, 'trades_per_day': 3.39, 'time_in_market': 0.998}
+BTCUSDT_5bp_L1_gru64_s0 ep 6 344s val {'ep': 6, 'steps': 700, 'train_loss': 0.00026, 'sharpe': -0.549, 'trades_per_day': 1.67, 'time_in_market': 0.999}
+BTCUSDT_5bp_L1_gru64_s0 ep 7 393s val {'ep': 7, 'steps': 800, 'train_loss': 0.00075, 'sharpe': -0.924, 'trades_per_day': 2.02, 'time_in_market': 0.999}
+BTCUSDT_5bp_L1_gru64_s0 ep 8 442s val {'ep': 8, 'steps': 900, 'train_loss': 0.00041, 'sharpe': -0.788, 'trades_per_day': 1.53, 'time_in_market': 0.999}
+BTCUSDT_5bp_L1_gru64_s0 ep 9 491s val {'ep': 9, 'steps': 1000, 'train_loss': 0.00031, 'sharpe': -1.422, 'trades_per_day': 1.4, 'time_in_market': 0.999}
+BTCUSDT_5bp_L1_gru64_s0 ep 10 540s val {'ep': 10, 'steps': 1100, 'train_loss': -9e-05, 'sharpe': -1.361, 'trades_per_day': 0.89, 'time_in_market': 1.0}
+BTCUSDT_5bp_L1_gru64_s0 ep 11 589s val {'ep': 11, 'steps': 1200, 'train_loss': -0.00014, 'sharpe': -0.933, 'trades_per_day': 0.39, 'time_in_market': 1.0}
+BTCUSDT_5bp_L1_gru64_s0 ep 12 638s val {'ep': 12, 'steps': 1300, 'train_loss': -0.00067, 'sharpe': -0.897, 'trades_per_day': 0.37, 'time_in_market': 1.0}
+BTCUSDT_5bp_L1_gru64_s0 ep 13 686s val {'ep': 13, 'steps': 1400, 'train_loss': -0.00031, 'sharpe': -0.94, 'trades_per_day': 0.34, 'time_in_market': 1.0}
